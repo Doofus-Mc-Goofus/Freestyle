@@ -1,7 +1,7 @@
 # Freestyle
 A weird YouTube Myspace Fediverse hybrid thing I'm working on. I'll add the code once the site launches publicly (or if I give up and dump it here for someone else to finish (significantly more likely))
 
-Since the code won't be here for a while, I though I'd give a progress report in the mean time to hold y'all over.
+Since the code won't be here for a while, I though I'd give a progress report in the mean time to hold all none of you over.
 
 |Feature|Status|
 |-|-|
