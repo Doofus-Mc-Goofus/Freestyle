@@ -1,0 +1,28 @@
+{
+  "name": "admin",
+  "domain": "thefreestyle.net",
+  "did": "admin",
+  "displayName": "Administrator",
+  "actualName": "Freestyle",
+  "bio": "i made the website. ",
+  "views": "0",
+  "vids": "1",
+  "followers": 1,
+  "following": "1",
+  "vidswatchedShow": "False",
+  "date": "2025-08-18T01:26:42",
+  "lastseen": "2025-11-24T00:20:08",
+  "videosMade": [
+    "EzmPNxoDTg"
+  ],
+  "followersList": [
+    "doofusmcgoofus"
+  ],
+  "followingList": [
+    "doofusmcgoofus"
+  ],
+  "groupsMade": [
+    "89ipuXf7rl"
+  ],
+  "verify": "2"
+}
