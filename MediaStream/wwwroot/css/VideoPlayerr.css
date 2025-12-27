@@ -1,0 +1,299 @@
+﻿body {
+    margin: 0px;
+}
+
+video::-webkit-media-controls {
+    display: none;
+}
+
+/* Could Use thise as well for Individual Controls */
+video::-webkit-media-controls-play-button {
+}
+
+video::-webkit-media-controls-volume-slider {
+}
+
+video::-webkit-media-controls-mute-button {
+}
+
+video::-webkit-media-controls-timeline {
+}
+
+video::-webkit-media-controls-current-time-display {
+}
+
+.mainVideo {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: black;
+    width: 100%;
+    height: 100%;
+}
+
+    .mainVideo video {
+        display: block;
+    }
+
+.videoPlayerControl {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    position: absolute;
+    overflow: hidden;
+    left: 0;
+    top: 0;
+}
+
+.mainVideo:hover .videoPlayerControl .videoPlayerBar {
+    transform: translateY(0);
+}
+
+.videoPlayerBar {
+    width: 100%;
+    height: 28px;
+    background: #000000;
+    background: -ms-linear-gradient(top, rgb(51,51,51) 0%,rgb(0,0,0) 100%);
+    background: -moz-linear-gradient(top, rgb(51,51,51) 0%,rgb(0,0,0) 100%);
+    background: -o-linear-gradient(top, rgb(51,51,51) 0%,rgb(0,0,0) 100%);
+    background: -webkit-linear-gradient(top, rgb(51,51,51) 0%,rgb(0,0,0) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#FF333333', endColorstr='#FF000000');
+    background: linear-gradient(#333C, #000C);
+    border-top-color: #00000066;
+    border-top-width: 1px;
+    border-top-style: solid;
+    backdrop-filter: blur(4px);
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    transform: translateY(100%) translateY(2px);
+    transition: all 0.2s;
+    z-index: 2;
+}
+
+.videoPlayerPlay, .videoPlayerVolume, .videoPlayerFullscreen, .videoPlayerSettings {
+    background: transparent;
+    width: 19px;
+    height: 19px;
+    top: 5px;
+    position: absolute;
+    background-size: 100% 100%;
+    cursor: pointer;
+}
+
+.videoPlayerPlay {
+    left: 10px;
+    background: url("/img/player/playing.png");
+    background-size: 100% 100%;
+}
+
+.videoPlayerVolume {
+    left: 40px;
+}
+
+.videoPlayerSettings {
+    right: 40px;
+    background: url("/img/player/setting.png");
+    background-size: 100% 100%;
+}
+
+.videoPlayerFullscreen {
+    right: 10px;
+}
+
+.videoPlayerSlider {
+    border: 1px solid #111;
+    background: #272727;
+    width: 442px;
+    height: 10px;
+    position: absolute;
+    top: 8px;
+    left: 75px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.videoPlayerSliderFull {
+    background: #160055;
+    background: -ms-linear-gradient(top, #160055 0%,#110042 100%);
+    background: -moz-linear-gradient(top, #160055 0%,#110042 100%);
+    background: -o-linear-gradient(top, #160055 0%,#110042 100%);
+    background: -webkit-linear-gradient(top, #160055 0%,#110042 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#FF160055', endColorstr='#FF110042');
+    background: linear-gradient(#160055, #110042);
+    height: 10px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 4px;
+}
+
+.videoPlayerSliderKnob {
+    position: absolute;
+    top: -3px;
+    margin-left: -8px;
+    width: 17px;
+    height: 17px;
+    background: url('/img/player/playerKnob.png');
+    background-size: 100% 100%;
+}
+
+.videoPlayerTimestamp {
+    color: white;
+    position: absolute;
+    top: 6px;
+    right: 72px;
+    width: 49px;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+}
+
+.videoPlayerOverlay {
+    position: absolute;
+    left: 0;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 1;
+}
+
+.videoPlayerVolumeBar {
+    width: 30px;
+    position: absolute;
+    height: 210px;
+    bottom: -201px;
+    transition: all 0.2s;
+    background: #000000;
+    background: -ms-linear-gradient(top, rgb(39,39,39) 0%,rgb(16,16,16) 100%);
+    background: -moz-linear-gradient(top, rgb(39,39,39) 0%,rgb(16,16,16) 100%);
+    background: -o-linear-gradient(top, rgb(39,39,39) 0%,rgb(16,16,16) 100%);
+    background: -webkit-linear-gradient(top, rgb(39,39,39) 0%,rgb(16,16,16) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#FF272727', endColorstr='#FF101010');
+    background: linear-gradient(#272727, #101010);
+    border-color: #00000066;
+    border-width: 1px;
+    border-style: solid solid none solid;
+}
+
+.videoPlayerVolumeClip {
+    position: absolute;
+    left: 34px;
+    bottom: 28px;
+    overflow: hidden;
+    height: 212px;
+    width: 32px;
+    display: none;
+}
+
+.videoPlayerUnsupported {
+    color: white;
+    background: black;
+    background: url('/img/player/tvStatic.gif');
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    font-size: 13px;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.volumeSlider {
+    left: 9px;
+    width: 10px;
+    height: 180px;
+    top: 16px;
+}
+
+.volumeSliderFull {
+    width: 10px;
+    height: 100%;
+    bottom: 0px;
+    top: unset;
+}
+
+.volumeSliderKnob {
+    margin-left: -3px;
+    top: unset;
+    bottom: 100%;
+    margin-bottom: -8px;
+    width: 16px;
+    height: 16px;
+}
+
+.videoPlayerSettingsClip {
+    position: absolute;
+    right: 0px;
+    bottom: 28px;
+    width: 250px;
+    height: 210px;
+    overflow: hidden;
+    display: none;
+}
+
+.videoPlayerSettingsBar {
+    transition: all 0.2s;
+    background: #000000;
+    background: -ms-linear-gradient(top, rgb(39,39,39) 0%,rgb(16,16,16) 100%);
+    background: -moz-linear-gradient(top, rgb(39,39,39) 0%,rgb(16,16,16) 100%);
+    background: -o-linear-gradient(top, rgb(39,39,39) 0%,rgb(16,16,16) 100%);
+    background: -webkit-linear-gradient(top, rgb(39,39,39) 0%,rgb(16,16,16) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#FF272727', endColorstr='#FF101010');
+    background: linear-gradient(#272727, #101010);
+    border-color: #00000066;
+    border-width: 1px;
+    border-style: solid solid none solid;
+    bottom: -208px;
+    position: absolute;
+    width: 100%;
+    height: 208px;
+}
+
+    .videoPlayerSettingsBar div {
+        color: white;
+        font-size: 13px;
+        font-family: Arial, Helvetica, sans-serif;
+        position: absolute;
+        left: 5px;
+        top: 5px;
+    }
+
+#videoPlayerSettingsSpeedAmount {
+    text-align: right;
+    position: absolute;
+    right: 10px;
+    top: 5px;
+}
+
+.playerMessage {
+    background: #000000;
+    background: -ms-linear-gradient(top, rgb(51,51,51) 0%,rgb(0,0,0) 100%);
+    background: -moz-linear-gradient(top, rgb(51,51,51) 0%,rgb(0,0,0) 100%);
+    background: -o-linear-gradient(top, rgb(51,51,51) 0%,rgb(0,0,0) 100%);
+    background: -webkit-linear-gradient(top, rgb(51,51,51) 0%,rgb(0,0,0) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#FF333333', endColorstr='#FF000000');
+    background: linear-gradient(#333, #000);
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    display: none;
+}
+
+    .playerMessage span {
+        color: white;
+        font-size: 16px;
+        font-family: Arial, Helvetica, sans-serif;
+        position: absolute;
+        left: 25px;
+        top: 25px;
+    }
+
+::cue {
+    text-shadow: 0 0 6px #fff4;
+    font-size: 16px;
+    background-color: #000;
+}

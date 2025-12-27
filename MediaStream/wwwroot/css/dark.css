@@ -1,0 +1,202 @@
+﻿html {
+    font-size: 12px;
+}
+
+body {
+    background: #080510;
+    color: white;
+}
+
+td, input {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+td {
+    vertical-align: top;
+}
+
+a {
+    color: #9594c3;
+    text-decoration: none;
+}
+
+div {
+    border-radius: 2px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a img {
+    border: none
+}
+
+.header {
+    background: #f4f1f6;
+    border: 1px solid #c5c1c9;
+    padding: 5px 5px;
+}
+
+.headertext {
+    color: black;
+    text-decoration: none !important;
+}
+
+.smallgray {
+    color: #aaa;
+}
+
+.user {
+    padding: 0px 35px 0px 5px;
+}
+
+.homeheader {
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
+.left-side {
+    float: left;
+    display: table-cell;
+}
+
+.right-side {
+    display: table-cell;
+}
+
+.headerbg {
+    background: white;
+}
+
+.trans {
+    border-radius: 0px;
+    background: linear-gradient(#FFF4, #FFF0);
+    background: -ms-linear-gradient(top, rgba(255,255,255,0.17) 0%,rgba(255,255,255,0) 100%);
+    background: -moz-linear-gradient(top, rgba(255,255,255,0.17) 0%,rgba(255,255,255,0) 100%);
+    background: -o-linear-gradient(top, rgba(255,255,255,0.17) 0%,rgba(255,255,255,0) 100%);
+    background: -webkit-linear-gradient(top, rgba(255,255,255,0.17) 0%,rgba(255,255,255,0) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#40FFFFFF', endColorstr='#00FFFFFF');
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background: #eee;
+    border-top-width: 0px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-style: solid;
+    border-color: #ccc;
+    min-width: 135px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+    .dropdown-content a {
+        color: black;
+        text-align: left;
+        padding: 3px 6px;
+        border-top-width: 1px;
+        border-bottom-width: 0px;
+        border-left-width: 0px;
+        border-right-width: 0px;
+        border-style: solid;
+        border-color: #ccc;
+        display: block;
+    }
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .dropbtn {
+    text-decoration: none !important;
+}
+
+textarea, input, select, option {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 12px;
+}
+
+input[type="radio" i] {
+    margin: 3px 0px;
+}
+
+.videoThumbnail {
+    display: block;
+    float: left;
+    margin-right: 16px;
+    margin-bottom: 8px;
+}
+
+.videoThumbnailImage {
+    width: 128px;
+    height: 96px;
+    position: absolute;
+}
+
+.videoThumbnailPlayButton {
+    position: relative;
+    width: 280px;
+    height: 210px;
+    left: 119px;
+    top: 84px;
+}
+
+.videoThumbnailActual {
+    display: block;
+    height: 96px;
+    margin-bottom: 3px;
+}
+
+.videoFeatThumbnailActual {
+    display: block;
+    height: 210px;
+    margin-bottom: 3px;
+}
+
+.videoThumbnailOverlay {
+    background: url('/img/thumbnailHoverFallback.png');
+    background: rgba(0, 0, 0, 0.658);
+    color: white !important;
+    font-size: 9px;
+    text-decoration: none;
+    position: absolute;
+    padding: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    width: 120px;
+    height: 88px;
+    border-radius: 0px;
+}
+
+.videoFeatThumbnailOverlay {
+    width: 272px;
+    height: 202px;
+    font-size: 12px;
+}
+
+.videoThumbnailOverlay:hover {
+    opacity: 1;
+}
+
+.videoThumbnailGenre {
+    color: lightgray !important;
+    text-decoration: none;
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+}
+
+.videoThumbnailRating {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+}
