@@ -1,0 +1,420 @@
+﻿@page
+@using MediaStream.Controllers
+@using Newtonsoft.Json.Linq
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model MediaStream.Pages.profileModel
+@{
+	// This is a terrible hack, but I don't care. What's the worst that could happen?
+	string id = "admin";
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	if (HttpContextAccessor.HttpContext.Request.Cookies["username"] == null)
+	{
+		Response.Redirect("/login");
+	}
+	else
+	{
+		id = HttpContextAccessor.HttpContext.Request.Cookies["username"];
+	}
+	FileStream stream = new(datapath + @"profiles\" + id, FileMode.Open, FileAccess.Read);
+	byte[] result = new byte[stream.Length];
+	_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+	string data = System.Text.Encoding.UTF8.GetString(result);
+	JObject json = JObject.Parse(data);
+	FileStream userstream = new(datapath + @"user\" + id, FileMode.Open, FileAccess.Read);
+	byte[] userresult = new byte[userstream.Length];
+	_ = await userstream.ReadAsync(userresult, 0, (int)userstream.Length);
+	string userdata = System.Text.Encoding.UTF8.GetString(userresult);
+	JObject userjson = JObject.Parse(userdata);
+	string displayName = string.Empty;
+	if (json["displayName"] != null)
+	{
+		displayName = json["displayName"].ToString();
+	}
+	else
+	{
+		displayName = json["name"].ToString();
+	}
+	if (json["vidswatchedShow"] != null && json["vidswatchedShow"].ToString() == "True")
+	{
+		json.Add("vidswatched", ((JArray)(userjson["vidswatched"])).Count);
+	}
+	stream.Close();
+	stream.Dispose();
+	userstream.Close();
+	userstream.Dispose();
+	Layout = "_Layout";
+	bool sectionnavbar = false;
+	string background = "#fff";
+	string backgroundrepeat = "no-repeat";
+	string backgroundfixed = "local";
+	string backgroundstretch = "contain";
+	string sectionbg = "#fff";
+	string sectionborder = "#ccc";
+	string boldtextcolor = "#000";
+	string boldtextweight = "bold";
+	string normtextcolor = "#000";
+	string normtextweight = "normal";
+	string septextcolor = "#000";
+	string subtextcolor = "#444";
+	string subtextweight = "normal";
+	string linktextcolor = "#0c0975";
+	string textfont = "Arial";
+	if (json["theme"] != null)
+	{
+		if (json["theme"]["navbarsection"] != null)
+		{
+			sectionnavbar = bool.Parse(json["theme"]["navbarsection"].ToString());
+		}
+		if (json["theme"]["background"] != null)
+		{
+			background = json["theme"]["background"].ToString();
+		}
+		if (json["theme"]["backgroundrepeat"] != null)
+		{
+			backgroundrepeat = json["theme"]["backgroundrepeat"].ToString();
+		}
+		if (json["theme"]["backgroundfixed"] != null)
+		{
+			backgroundfixed = json["theme"]["backgroundfixed"].ToString();
+		}
+		if (json["theme"]["backgroundstretch"] != null)
+		{
+			backgroundstretch = json["theme"]["backgroundstretch"].ToString();
+		}
+		if (json["theme"]["sectionbg"] != null)
+		{
+			sectionbg = json["theme"]["sectionbg"].ToString();
+		}
+		if (json["theme"]["sectionborder"] != null)
+		{
+			sectionborder = json["theme"]["sectionborder"].ToString();
+		}
+		if (json["theme"]["boldtextcolor"] != null)
+		{
+			boldtextcolor = json["theme"]["boldtextcolor"].ToString();
+		}
+		if (json["theme"]["boldtextweight"] != null)
+		{
+			boldtextweight = json["theme"]["boldtextweight"].ToString();
+		}
+		if (json["theme"]["normtextcolor"] != null)
+		{
+			normtextcolor = json["theme"]["normtextcolor"].ToString();
+		}
+		if (json["theme"]["normtextweight"] != null)
+		{
+			normtextweight = json["theme"]["normtextweight"].ToString();
+		}
+		if (json["theme"]["septextcolor"] != null)
+		{
+			septextcolor = json["theme"]["septextcolor"].ToString();
+		}
+		if (json["theme"]["subtextcolor"] != null)
+		{
+			subtextcolor = json["theme"]["subtextcolor"].ToString();
+		}
+		if (json["theme"]["subtextweight"] != null)
+		{
+			subtextweight = json["theme"]["subtextweight"].ToString();
+		}
+		if (json["theme"]["linktextcolor"] != null)
+		{
+			linktextcolor = json["theme"]["linktextcolor"].ToString();
+		}
+		if (json["theme"]["textfont"] != null)
+		{
+			textfont = json["theme"]["textfont"].ToString();
+		}
+	}
+	string profilepagelink = "/studio";
+	byte verify = 0;
+	if (json["verify"] != null)
+	{
+		verify = byte.Parse(json["verify"].ToString());
+	}
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<style type="text/css">
+	body {
+		background: @background !important;
+		background-repeat: @backgroundrepeat;
+		background-attachment: @backgroundfixed;
+		background-size: @backgroundstretch;
+	}
+
+	.sectionbox {
+		background-color: @sectionbg;
+		padding: 4px 0px;
+		border-style: solid;
+		border-color: @sectionborder;
+		border-width: 1px;
+	}
+
+	.fontfamily strong {
+		color: @boldtextcolor !important;
+		font-weight: @boldtextweight;
+	}
+
+	.fontfamily span, .fontfamily div {
+		color: @normtextcolor;
+		font-weight: @normtextweight;
+	}
+
+	.textseparator {
+		color: @septextcolor !important;
+	}
+
+	.fontfamily .smallgray {
+		color: @subtextcolor !important;
+		font-weight: @subtextweight;
+	}
+
+	.fontfamily div, .fontfamily p, .fontfamily span, .fontfamily strong, .fontfamily td {
+		font-family: @textfont;
+	}
+
+	.fontfamily a {
+		color: @linktextcolor !important;
+	}
+</style>
+<script>
+	function follow() {
+		urlParam = function(name){
+		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+		if (results == null){
+		   return null;
+		}
+		else {
+		   return decodeURI(results[1]) || 0;
+		}
+		}
+		var myParam = urlParam("id");
+		var http = new XMLHttpRequest();
+		var params = '{"username":"' + myParam + '"}';
+		http.open("POST", "/api/follow", true);
+		http.setRequestHeader("Content-type", "application/json");
+
+		http.onreadystatechange = function() { //Call a function when the state changes.
+			if (http.readyState == XMLHttpRequest.DONE && http.status == 200) {
+				var json = JSON.parse(http.responseText);
+				if (json.redirect != "True")
+				{
+					window.location = "/login";
+				} else {
+					location.reload();
+				}
+			}
+		}
+		http.send(params);
+	}
+	function unfollow() {
+		urlParam = function(name){
+		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+		if (results == null){
+		   return null;
+		}
+		else {
+		   return decodeURI(results[1]) || 0;
+		}
+		}
+		var myParam = urlParam("id");
+		var http = new XMLHttpRequest();
+		var params = '{"username":"' + myParam + '"}';
+		http.open("POST", "/api/unfollow", true);
+		http.setRequestHeader("Content-type", "application/json");
+
+		http.onreadystatechange = function() { //Call a function when the state changes.
+			if (http.readyState == XMLHttpRequest.DONE && http.status == 200) {
+				var json = JSON.parse(http.responseText);
+				if (json.redirect != "True")
+				{
+					window.location = "/login";
+				} else {
+					location.reload();
+				}
+			}
+		}
+		http.send(params);
+	}
+</script>
+<tr>
+	<td colspan="2" class="fontfamily">
+		<form method="post">
+			<div class="@((sectionnavbar) ? " sectionbox" : "navbar")" style="text-align: center;margin-bottom:16px;">
+				<span style="font-size:14px;">
+					<a href="@(profilepagelink + "/prof")">Profile</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/vid")">Videos</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/playlist")">Playlists</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/group")">Groups</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/comment")">Comments</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/activity")">Activity</a>
+				</span>
+			</div>
+			<div>
+				<div class="profileleftfloat" style="float: left; width: 320px; padding-right: 16px;">
+					<table border="0" cellpadding="0" cellspacing="0" style="width:100%;">
+						<tbody>
+							<tr>
+								<td colspan="2">
+									<div class="homeheader"><span style="font-size:14px;"><strong>Profile Details</strong></span><div id="details_save" style="float: right; margin-top: 1px; display: inline;"><a href="#">Update</a></div></div>
+								</td>
+							</tr>
+							<tr>
+								<td style="width:96px;">
+									<img alt="" src="~/api/thumb?id=@id&type=user" style="width: 96px; height: 96px;" />
+								</td>
+								<td style="padding-left: 5px;">
+									<span><strong>Display Name: </strong></span>
+									<input style="width:217px;" maxlength="30" name="displayNameBox" id="displayNameBox" size="30" type="text" value="@((json["displayName"] != null) ? json["displayName"].ToString() : json["name"].ToString())" />
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<span><strong>Bio: </strong></span>
+									<textarea style="width:320px;resize:vertical;" maxlength="512" name="descBox" id="descBox" cols="33" rows="10">@json["bio"].ToString()</textarea>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									@{
+										<p>
+											<span><strong>Name: </strong></span>
+											<input style="width:320px;" maxlength="30" name="nameBox" id="nameBox" size="30" type="text" value="@((json["actualName"] != null) ? json["actualName"].ToString() : string.Empty)" />
+										</p>
+										<p>
+											<span><strong>Mood: </strong></span>
+											<input style="width:320px;" maxlength="100" name="moodBox" id="moodBox" size="30" type="text" value="@((json["mood"] != null) ? json["mood"].ToString() : string.Empty)" />
+										</p>
+										<p>
+											<table cellpadding="0" cellspacing="0" style="width: 320px">
+												<tbody>
+													<tr>
+														<td><strong>Gender: </strong></td>
+														<td><strong>Pronouns: </strong></td>
+													</tr>
+													<tr>
+														<td>
+															<input style="width:93%" maxlength="30" name="genderBox" id="genderBox" size="18" type="text" value="@((json["gender"] != null) ? json["gender"].ToString() : string.Empty)" />
+														</td>
+														<td>
+															<input style="width:100%" maxlength="30" name="pronounBox" id="pronounBox" size="18" type="text" value="@((json["pronoun"] != null) ? json["pronoun"].ToString() : string.Empty)" />
+														</td>
+													</tr>
+												</tbody>
+											</table>
+										</p>
+										<p>
+											<span><strong>Occupation: </strong></span>
+											<input style="width:320px;" maxlength="30" name="occupationBox" id="occupationBox" size="30" type="text" value="@((json["occupation"] != null) ? json["occupation"].ToString() : string.Empty)" />
+										</p>
+										<p>
+											<span><strong>Website: </strong></span>
+											<input style="width:320px;" maxlength="30" name="webBox" id="webBox" size="30" type="text" value="@((json["website"] != null) ? json["website"].ToString() : string.Empty)" />
+										</p>
+										<p>
+											<span><strong>Interests: </strong></span>
+											<textarea style="width:320px;resize:vertical;" maxlength="512" name="interestBox" id="interestBox" cols="33" rows="4">@((json["interest"] != null) ? json["interest"].ToString() : string.Empty)</textarea>
+										</p>
+										<p><a href="/settings">Edit Account Settings</a></p>
+									}
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div>&nbsp;</div>
+				</div>
+				<div class="profilerightfloat" style="display: table-cell;">
+					<div class="homeheader"><span style="font-size:14px;"><strong>Profile Theme</strong></span></div>
+					<div class="profcustomthemething">
+						<label for="backgroundCol">Background Color:</label>
+						<input type="color" id="backgroundCol" name="backgroundCol" value="#ffffff" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="backgroundImg">Background Image:</label>
+						<input type="file" id="backgroundImg" name="backgroundImg" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="backgroundRep">Background Repeat:</label>
+						<input type="checkbox" id="backgroundRep" name="backgroundRep" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="backgroundFix">Background Fixed:</label>
+						<input type="checkbox" id="backgroundFix" name="backgroundFix" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="backgroundStretch">Background Stretch:</label>
+						<input type="checkbox" id="backgroundStretch" name="backgroundStretch" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="fontFamily">Font Family:</label>
+						<select name="fontFamily" id="fontFamily">
+							<option value="arial,helvetica,sans-serif">Arial</option>
+							<option value="comic sans ms,cursive">Comic Sans MS</option>
+							<option value="courier new,courier,monospace">Courier New</option>
+							<option value="georgia,serif">Georgia</option>
+							<option value="lucida sans unicode,lucida grande,sans-serif">Lucida Sans</option>
+							<option value="tahoma,geneva,sans-serif">Tahoma</option>
+							<option value="times new roman,times,serif">Times New Roman</option>
+							<option value="trebuchet ms,helvetica,sans-serif">Trebuchet MS</option>
+							<option value="verdana,geneva,sans-serif">Verdana</option>
+						</select>
+					</div>
+					<div class="profcustomthemething">
+						<label for="textCol">Text Color:</label>
+						<input type="color" id="textCol" name="textCol" value="#ffffff" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="textWeight">Text Weight:</label>
+						<select name="textWeight" id="textWeight">
+							<option value="Light">Light</option>
+							<option value="Normal">Normal</option>
+							<option value="Bold">Bold</option>
+						</select>
+					</div>
+					<div class="profcustomthemething">
+						<label for="HLtextCol">Hightlight Text Color:</label>
+						<input type="color" id="HLtextCol" name="HLtextCol" value="#ffffff" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="HLtextWeight">Hightlight Text Weight:</label>
+						<select name="HLtextWeight" id="HLtextWeight">
+							<option value="Light">Light</option>
+							<option value="Normal">Normal</option>
+							<option value="Bold">Bold</option>
+						</select>
+					</div>
+					<div class="profcustomthemething">
+						<label for="SubtextCol">Subtext Color:</label>
+						<input type="color" id="SubtextCol" name="SubtextCol" value="#ffffff" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="SubtextWeight">Subtext Weight:</label>
+						<select name="SubtextWeight" id="SubtextWeight">
+							<option value="Light">Light</option>
+							<option value="Normal">Normal</option>
+							<option value="Bold">Bold</option>
+						</select>
+					</div>
+					<div class="profcustomthemething">
+						<label for="SeparatorCol">Separator Color:</label>
+						<input type="color" id="SeparatorCol" name="SeparatorCol" value="#ffffff" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="LinkCol">Hyperlink Color:</label>
+						<input type="color" id="LinkCol" name="LinkCol" value="#ffffff" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="navBar">Navigation Background Bar:</label>
+						<input type="checkbox" id="navBar" name="navBar" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="navCol">Navigation Background Color:</label>
+						<input type="color" id="navCol" name="navCol" value="#ffffff" />
+					</div>
+					<div class="profcustomthemething">
+						<label for="navBorderCol">Navigation Border Color:</label>
+						<input type="color" id="navBorderCol" name="navBorderCol" value="#ffffff" />
+					</div>
+					<div class="profcustomthemething"><a href="/studio/customcss">Edit Profile CSS</a></div>
+				</div>
+			</div>
+		</form>
+	</td>
+</tr>

@@ -1,0 +1,80 @@
+﻿@page
+@using Newtonsoft.Json.Linq
+@using Microsoft.AspNetCore.Http
+@model MediaStream.Pages.LoginModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+	string message = string.Empty;
+	if (HttpMethods.IsGet(Request.Method))
+	{
+		if (HttpContextAccessor.HttpContext.Request.Cookies["username"] != null)
+		{
+			Response.Redirect("/my");
+		}
+	}
+	else if (HttpMethods.IsPost(Request.Method))
+	{
+		try
+		{
+			string username = Request.Form["usernameBox"];
+			string password = Request.Form["passwordBox"];
+			string datapath = @"D:\Freestyle\Debug\net6.0\data\user\";
+			if (System.IO.File.Exists(@"D:\Freestyle\Debug\net6.0\data\redirect\" + username))
+			{
+				FileStream personstream = new(@"D:\Freestyle\Debug\net6.0\data\redirect\" + username, FileMode.Open, FileAccess.Read);
+				byte[] personresult = new byte[personstream.Length];
+				_ = await personstream.ReadAsync(personresult, 0, (int)personstream.Length);
+				string persondata = System.Text.Encoding.UTF8.GetString(personresult);
+				FileStream stream = new(datapath + persondata, FileMode.Open, FileAccess.Read);
+				byte[] result = new byte[stream.Length];
+				_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+				string data = System.Text.Encoding.UTF8.GetString(result);
+				JObject json = JObject.Parse(data);
+				if (json["password"].ToString() == password)
+				{
+					Response.Cookies.Append("username", persondata);
+					Response.Cookies.Append("password", password);
+					Response.Cookies.Append("session", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+					Response.Redirect("/my");
+				}
+				stream.Close();
+				stream.Dispose();
+			}
+			throw new Exception("Username or password is invalid");
+		}
+		catch (Exception ex)
+		{
+			message = ex.Message.ToString();
+		}
+	}
+	Layout = "_Layout";
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<tr>
+	<td colspan="2">
+		<form id="form1" method="post">
+			<div><span style="font-size: 14px;"><b>Log In:</b></span></div>
+
+			<div>&nbsp;</div>
+
+			<div>Username:</div>
+
+			<div><input placeholder="username#domain.tld" maxlength="40" name="usernameBox" size="30" type="text" /></div>
+
+			<div>&nbsp;</div>
+
+			<div>Password:</div>
+
+			<div><input maxlength="50" name="passwordBox" size="30" type="password" /></div>
+
+			<div><span style="color:#B22222;" id="errorText">@message</span></div>
+
+			<div>&nbsp;</div>
+
+			<div><input name="signinButton" type="submit" value="Log In" /></div>
+			@Html.AntiForgeryToken()
+		</form>
+	</td>
+</tr>

@@ -1,0 +1,131 @@
+﻿@page
+@using Newtonsoft.Json.Linq
+@using System.IO
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model MediaStream.Pages.IndexModel
+@{
+	Random random = new Random();
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	Layout = "_Layout";
+
+	string isTextBold(string key, string value, bool fuck = false)
+	{
+		if (TextRaw(key, value, fuck))
+		{
+			return "bold";
+		}
+		else
+		{
+			return "normal";
+		}
+	}
+	string isTextCol(string key, string value, bool fuck = false)
+	{
+		if (TextRaw(key, value, fuck))
+		{
+			return "color:black;";
+		}
+		else
+		{
+			return string.Empty;
+		}
+	}
+	bool TextRaw(string key, string value, bool fuck = false)
+	{
+		if (fuck && HttpContext.Request.Query[key] == Microsoft.Extensions.Primitives.StringValues.Empty)
+		{
+			return true;
+		}
+		string ogKey = HttpContext.Request.Query[key].ToString();
+		if (ogKey == value)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<tr>
+	<td>
+		<div style="float: left; width: 200px; padding-right: 10px;">
+			<div class="homeheader"><span style="font-size: 14px;"><strong>Categories</strong></span></div>
+			<div style="font-weight: @isTextBold("cat", "all", true); padding-bottom: 2px;"><a onclick="updateParam('cat', 'all')" href="#">All</a></div>
+			<div style="font-weight: @isTextBold("cat", "auto"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'auto')" href="#">Autos and Vehicles</a></div>
+			<div style="font-weight: @isTextBold("cat", "comedy"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'comedy')" href="#">Comedy</a></div>
+			<div style="font-weight: @isTextBold("cat", "education"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'education')" href="#">Education</a></div>
+			<div style="font-weight: @isTextBold("cat", "entertain"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'entertain')" href="#">Entertainment</a></div>
+			<div style="font-weight: @isTextBold("cat", "film"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'film')" href="#">Film & Animation</a></div>
+			<div style="font-weight: @isTextBold("cat", "tutorial"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'tutorial')" href="#">Tutorials & Style</a></div>
+			<div style="font-weight: @isTextBold("cat", "music"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'music')" href="#">Music</a></div>
+			<div style="font-weight: @isTextBold("cat", "news"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'news')" href="#">News & Politics</a></div>
+			<div style="font-weight: @isTextBold("cat", "blog"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'blog')" href="#">People & Blogs</a></div>
+			<div style="font-weight: @isTextBold("cat", "pet"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'pet')" href="#">Pets & Animals</a></div>
+			<div style="font-weight: @isTextBold("cat", "tech"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'tech')" href="#">Science & Technology</a></div>
+			<div style="font-weight: @isTextBold("cat", "sports"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'sports')" href="#">Sports</a></div>
+			<div style="font-weight: @isTextBold("cat", "travel"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'travel')" href="#">Travel & Events</a></div>
+		</div>
+
+		<div style="display: table-cell;">
+			<div class="homeheader">
+				<span style="font-size:14px;">
+					<span style="font-weight: @isTextBold("sort", "latest");"><a style="@isTextCol("sort", "latest")" onclick="updateParam('sort', 'latest')" href="#">Latest</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("sort", "popular", true);"><a style="@isTextCol("sort", "popular", true)" onclick="updateParam('sort', 'popular')" href="#">Popular</a></span>
+				</span>
+			</div>
+			<hr />
+			@{
+				List<JObject> people = new List<JObject>();
+				DirectoryInfo persondirectoryInfo = new DirectoryInfo(datapath + @"profiles\");
+				FileInfo[] personfiles = persondirectoryInfo.GetFiles();
+				for (int i = 0; i < 16; i++)
+				{
+					var id = random.Next(0, personfiles.Count());
+					FileStream stream = new(personfiles[id].FullName, FileMode.Open, FileAccess.Read);
+					byte[] result = new byte[stream.Length];
+					_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+					string data = System.Text.Encoding.UTF8.GetString(result);
+					JObject json = JObject.Parse(data);
+					JObject finJson = JObject.Parse("{" + "}");
+					finJson.Add("name", json["name"].ToString());
+					finJson.Add("did", json["did"].ToString());
+					finJson.Add("displayName", ((json["displayName"] != null) ? json["displayName"].ToString() : json["name"].ToString()));
+					finJson.Add("bio", json["bio"].ToString());
+					finJson.Add("views", json["views"].ToString());
+					finJson.Add("vids", JArray.Parse(json["videosMade"].ToString()).Count.ToString());
+					people.Add(finJson);
+					stream.Close();
+					stream.Dispose();
+				}
+			}
+			<div style="display: inline-block;">
+				@foreach (JObject person in people)
+				{
+					<div style="display: block; float: left; margin-bottom: 8px; width: 360px;">
+						<table border="0" cellpadding="0" cellspacing="0" style="float: left;">
+							<tbody>
+								<tr>
+									<td colspan="2"><a title="@person["name"].ToString()" href="/profile?id=@person["did"].ToString()">@person["displayName"].ToString()</a></td>
+								</tr>
+								<tr>
+									<td rowspan="2"><a href="/profile?id=@person["did"].ToString()"><img alt="" src="~/api/thumb?id=@person["name"].ToString()&type=user" style="width: 64px; height: 64px;" /></a></td>
+									<td class="user" rowspan="2">
+										<div style="height:32px; overflow: hidden">@person["bio"].ToString()</div>
+
+										<div class="smallgray">@person["vids"].ToString() Videos</div>
+
+										<div class="smallgray">@person["views"].ToString() Views</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				}
+			</div>
+			<div>&nbsp;</div>
+		</div>
+	</td>
+</tr>

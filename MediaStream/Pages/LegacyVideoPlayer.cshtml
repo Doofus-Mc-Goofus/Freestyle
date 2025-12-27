@@ -1,0 +1,16 @@
+﻿@page
+@model MediaStream.Pages.LegacyVideoPlayerModel
+@{
+	string id = HttpContext.Request.Query["id"].ToString();
+	string creator = HttpContext.Request.Query["creator"].ToString();
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<html>
+<body style="margin: 0px; padding: 0px;">
+	<div style="background: black;">
+		<video style="color: white;" controls="" height="100%" width="100%"><source src="/watch?id=@id&creator=@creator" type="video/mp4" />Your browser does not support videos.</video>
+	</div>
+</body>
+</html>

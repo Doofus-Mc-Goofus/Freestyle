@@ -1,0 +1,141 @@
+﻿@page
+@using Newtonsoft.Json.Linq
+@using System.IO
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model MediaStream.Pages.IndexModel
+@{
+	if (HttpContextAccessor.HttpContext.Request.Cookies["username"] == null)
+	{
+		Response.Redirect("/login");
+	}
+	Random random = new Random();
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	Layout = "_Layout";
+	string isTextBold(string key, string value, bool fuck = false)
+	{
+		if (TextRaw(key, value, fuck))
+		{
+			return "bold";
+		}
+		else
+		{
+			return "normal";
+		}
+	}
+	string isTextCol(string key, string value, bool fuck = false)
+	{
+		if (TextRaw(key, value, fuck))
+		{
+			return "color:black;";
+		}
+		else
+		{
+			return string.Empty;
+		}
+	}
+	bool TextRaw(string key, string value, bool fuck = false)
+	{
+		if (fuck && HttpContext.Request.Query[key] == Microsoft.Extensions.Primitives.StringValues.Empty)
+		{
+			return true;
+		}
+		string ogKey = HttpContext.Request.Query[key].ToString();
+		if (ogKey == value)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<script>
+	function experimentJoin(myParam) {
+		urlParam = function(name){
+		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+		if (results == null){
+		   return null;
+		}
+		else {
+		   return decodeURI(results[1]) || 0;
+		}
+		}
+		var http = new XMLHttpRequest();
+		var params = '{"username":"' + myParam + '"}';
+		http.open("POST", "/api/experimentJoin", true);
+		http.setRequestHeader("Content-type", "application/json");
+
+		http.onreadystatechange = function() { //Call a function when the state changes.
+			if (http.readyState == XMLHttpRequest.DONE && http.status == 200) {
+				var json = JSON.parse(http.responseText);
+				if (json.redirect != "True")
+				{
+					window.location = "/login";
+				} else {
+					location.reload();
+				}
+			}
+		}
+		http.send(params);
+	}
+	function experimentLeave(myParam) {
+		urlParam = function(name){
+		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+		if (results == null){
+		   return null;
+		}
+		else {
+		   return decodeURI(results[1]) || 0;
+		}
+		}
+		var http = new XMLHttpRequest();
+		var params = '{"username":"' + myParam + '"}';
+		http.open("POST", "/api/experimentLeave", true);
+		http.setRequestHeader("Content-type", "application/json");
+
+		http.onreadystatechange = function() { //Call a function when the state changes.
+			if (http.readyState == XMLHttpRequest.DONE && http.status == 200) {
+				var json = JSON.parse(http.responseText);
+				if (json.redirect != "True")
+				{
+					window.location = "/login";
+				} else {
+					location.reload();
+				}
+			}
+		}
+		http.send(params);
+	}
+</script>
+
+<tr>
+	<td>
+		<div style="display: table-cell;">
+			<div class="homeheader"><span style="font-size: 14px;"><b>Teststyle</b></span></div>
+			<div>Experimental features that may not be added to the site. Get them while you can and give us feedback so that we can make them better.</div>
+			<div>&nbsp;</div>
+			<div style="display: inline-block;">
+				<div style="display: block; float: left; margin-bottom: 8px; width: 100%;">
+					<table border="0" cellpadding="0" cellspacing="0" style="float: left;">
+						<tbody>
+							<tr>
+								<td rowspan="2"><img alt="" src="" style="width: 64px; height: 64px;" /></td>
+								<td class="user" rowspan="2">
+									<div><b>Rewritten Video Player</b></div>
+									<div style="height:32px; overflow: hidden">A new video player written in more native HTML5. Currently unfinished, but preferable to the Interplex player.</div>
+
+									<div class="smallgray"><a onclick="experimentJoin('playerV2');" href="#">Try out!</a></div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div>&nbsp;</div>
+		</div>
+	</td>
+</tr>

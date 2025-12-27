@@ -1,0 +1,158 @@
+﻿@page
+@using MediaStream.Controllers
+@using Newtonsoft.Json.Linq
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model MediaStream.Pages.profileModel
+@{
+	// This is a terrible hack, but I don't care. What's the worst that could happen?
+	string id = "admin";
+	if (HttpContextAccessor.HttpContext.Request.Cookies["username"] == null)
+	{
+		Response.Redirect("/login");
+	}
+	else
+	{
+		id = HttpContextAccessor.HttpContext.Request.Cookies["username"];
+	}
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	FileStream stream = new(datapath + @"profiles\" + id, FileMode.Open, FileAccess.Read);
+	byte[] result = new byte[stream.Length];
+	_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+	string data = System.Text.Encoding.UTF8.GetString(result);
+	JObject json = JObject.Parse(data);
+	FileStream userstream = new(datapath + @"user\" + id, FileMode.Open, FileAccess.Read);
+	byte[] userresult = new byte[userstream.Length];
+	_ = await userstream.ReadAsync(userresult, 0, (int)userstream.Length);
+	string userdata = System.Text.Encoding.UTF8.GetString(userresult);
+	JObject userjson = JObject.Parse(userdata);
+	string displayName = string.Empty;
+	if (json["displayName"] != null)
+	{
+		displayName = json["displayName"].ToString();
+	}
+	else
+	{
+		displayName = json["name"].ToString();
+	}
+	if (json["vidswatchedShow"] != null && json["vidswatchedShow"].ToString() == "True")
+	{
+		json.Add("vidswatched", ((JArray)(userjson["vidswatched"])).Count);
+	}
+	stream.Close();
+	stream.Dispose();
+	userstream.Close();
+	userstream.Dispose();
+	Layout = "_Layout";
+	int type = -1;
+	if (Request.Cookies["username"] == json["name"].ToString())
+	{
+		type = 1;
+	}
+	else
+	{
+		if (json["followersList"].ToString().Contains("\"" + Request.Cookies["username"] + "\""))
+		{
+			type = 3;
+		}
+		else
+		{
+			type = 2;
+		}
+	}
+	string profilepagelink = "/studio";
+	byte verify = 0;
+	if (json["verify"] != null)
+	{
+		verify = byte.Parse(json["verify"].ToString());
+	}
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<tr>
+	<td colspan="2" class="fontfamily">
+		<div>
+			@{
+				JArray fuck = JArray.Parse(userjson["videosMade"].ToString());
+				List<JObject> videos = new List<JObject>();
+				string[] pickedVids = new string[8];
+				for (int i = 0; i < fuck.Count; i++)
+				{
+					FileStream videostream = new(datapath + @"vidmeta\" + id + @"\" + fuck[i].ToString(), FileMode.Open, FileAccess.Read);
+					byte[] videoresult = new byte[videostream.Length];
+					_ = await videostream.ReadAsync(videoresult, 0, (int)videostream.Length);
+					string videodata = System.Text.Encoding.UTF8.GetString(videoresult);
+					JObject videojson = JObject.Parse(videodata);
+					JObject finJson = JObject.Parse("{" + "}");
+					finJson.Add("title", videojson["title"].ToString());
+					finJson.Add("id", fuck[i].ToString());
+					finJson.Add("views", videojson["views"].ToString());
+					finJson.Add("date", videojson["date"].ToString());
+					finJson.Add("desc", videojson["desc"].ToString());
+					if (videojson["category"] != null)
+					{
+						finJson.Add("category", videojson["category"].ToString());
+					}
+					else
+					{
+						finJson.Add("category", "none");
+					}
+					if (videojson["rating"] != null)
+					{
+						finJson.Add("rating", videojson["rating"].ToString());
+					}
+					else
+					{
+						finJson.Add("rating", "p");
+					}
+					if (videojson["draft"] != null)
+					{
+						finJson.Add("draft", videojson["draft"].ToString());
+					}
+					else
+					{
+						finJson.Add("draft", "false");
+					}
+					videos.Add(finJson);
+					videostream.Close();
+					videostream.Dispose();
+				}
+			}
+
+			<div class="navbar" style="text-align: center;margin-bottom:16px;">
+				<span style="font-size:14px;">
+					<a href="@(profilepagelink + "/prof")">Profile</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/vid")">Videos</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/playlist")">Playlists</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/group")">Groups</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/comment")">Comments</a><span class="textseparator"> | </span><a href="@(profilepagelink + "/activity")">Activity</a>
+				</span>
+			</div>
+
+			<div class="homeheader"><span style="font-size:14px;"><strong>My Videos (@fuck.Count)</strong></span></div>
+
+			<div class="homeheader">
+				<div style="display: inline-block; margin-right: 8px;">
+					@foreach (JObject video in videos)
+					{
+						<div class="videoThumbnail">
+							<a href="/edit?id=@video["id"].ToString()&creator=@id" class="videoThumbnailActual">
+								<div class="videoThumbnailImage">
+									<img src="~/api/thumb?id=@video["id"].ToString()&type=vid" style="width: 128px; height: 96px;" />
+								</div>
+								<div class="videoThumbnailOverlay">
+									@video["desc"]
+									<div class="videoThumbnailGenre">@((!bool.Parse(video["draft"].ToString())) ? GetLang.GetDisplayName(video["category"].ToString()) : GetLang.GetDisplayName("draft"))</div>
+									<img alt="@(video["rating"])" src="/img/rating@(video["rating"]).png" class="videoThumbnailRating">
+								</div>
+							</a>
+
+							<div style="width: 128px;height:32px;white-space: wrap;overflow: hidden;"><a href="/play?id=@video["id"].ToString()&creator=@id">@video["title"].ToString()</a></div>
+
+							<div class="smallgray">@(MediaStream.Convert.GetTime(video["date"].ToString()))</div>
+
+							<div class="smallgray">@video["views"].ToString() views</div>
+						</div>
+					}
+					<div style="width:max-content;"></div>
+				</div>
+			</div>
+		</div>
+	</td>
+</tr>

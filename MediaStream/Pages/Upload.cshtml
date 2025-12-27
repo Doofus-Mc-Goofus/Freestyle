@@ -1,0 +1,43 @@
+﻿@page
+@using Newtonsoft.Json.Linq
+@using Microsoft.AspNetCore.Http
+@model MediaStream.Pages.UploadModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+	string message = string.Empty;
+	if (HttpMethods.IsGet(Request.Method))
+	{
+		if (HttpContextAccessor.HttpContext.Request.Cookies["username"] == null)
+		{
+			Response.Redirect("/login");
+		}
+	}
+	else if (HttpMethods.IsPost(Request.Method))
+	{
+		try
+		{
+			string username = Request.Form["titleBox"];
+		}
+		catch (Exception ex)
+		{
+			message = ex.Message.ToString();
+		}
+	}
+
+	Layout = "_Layout";
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<tr>
+	<td colspan="2">
+		<div id="VideoDiv">
+			<form action="api/uploadVideo" method="post" enctype='multipart/form-data'>
+				<div><span style="font-size: 14px;"><b>Upload Video</b></span></div>
+				<div>&nbsp;</div>
+				<input type="file" name="aa" id="aa" />
+				<input type="submit" />
+			</form>
+		</div>
+	</td>
+</tr>

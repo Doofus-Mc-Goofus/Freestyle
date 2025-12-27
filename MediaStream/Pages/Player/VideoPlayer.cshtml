@@ -1,0 +1,319 @@
+﻿@page
+@model MediaStream.Pages.Player.VideoPlayerModel
+@{
+	string id = HttpContext.Request.Query["id"].ToString();
+	string creator = HttpContext.Request.Query["creator"].ToString();
+}
+<!doctype html>
+<html>
+<head>
+	<title></title>
+	<link href="~/css/VideoPlayerr.css" media="all" rel="stylesheet" type="text/css" />
+	<script src="/js/jquery.min.js"></script>
+	<script>
+
+		$(document).ready(function(){
+			var video = document.getElementById("videoPlayer");
+			var timelineKnob = document.getElementById("timelineKnob");
+			var timelineFull = document.getElementById("timelineFull");
+			var playPause = document.getElementById("playPause");
+			var timeline = document.getElementById("timeline");
+			var videoTimestamp = document.getElementById("videoTimestamp");
+			var videoPlayerOverlay = document.getElementById("videoPlayerOverlay");
+			var volumeButton = document.getElementById("volumeButton");
+			var videoPlayerVolumeClip = document.getElementById("videoPlayerVolumeClip");
+			var videoPlayerVolumeBar = document.getElementById("videoPlayerVolumeBar");
+			var videoPlayerFullscreen = document.getElementById("videoPlayerFullscreen");
+			var volumeSlider = document.getElementById("volumeSlider");
+			var volumeSliderFull = document.getElementById("volumeSliderFull");
+			var volumeSliderKnob = document.getElementById("volumeSliderKnob");
+			var videoPlayerFullscreen = document.getElementById("videoPlayerFullscreen");
+			var videoPlayerSettings = document.getElementById("videoPlayerSettings");
+			var videoPlayerSettingsBar = document.getElementById("videoPlayerSettingsBar");
+			var videoPlayerSettingsClip = document.getElementById("videoPlayerSettingsClip");
+			var playerMessage = document.getElementById("playerMessage");
+			var track_elem = document.querySelector('track');
+
+			if (track_elem != null)
+			{
+				track_elem.addEventListener('loaded',initialize_test,false); // Bug in FF31 MAC: wrong event name
+		track_elem.addEventListener('load',initialize_test,false);
+
+		function initialize_test() {
+		  var i, j, track, video = document.querySelector('video');
+		  track = video.textTracks;
+		  for (i=0; i<track.length; i++)
+			for (j=0; j<track[i].cues.length; j++)
+			  track[i].cues[j].line = -3;
+		}
+			}
+			videoPlayerFullscreen.style.backgroundImage = "url('/img/player/fullscreen1.png')";
+			volumeButton.style.backgroundImage = "url('/img/player/" + (Math.floor(video.volume * 3)) + ".png')";
+			var volumeBarOpen = false;
+			videoPlayerVolumeBar.style.bottom = "-201px";
+			videoPlayerVolumeBar.style.transition = "all 0.2s";
+			var fullscreenBarOpen = false;
+			videoPlayerSettingsBar.style.bottom = "-208px";
+			videoPlayerSettingsBar.style.transition = "all 0.2s";
+			videoPlayerSettings.addEventListener("click", function() {
+				if (fullscreenBarOpen)
+				{
+					videoPlayerSettingsClip.style.display = "none";
+					videoPlayerSettingsBar.style.bottom = "-208px";
+					fullscreenBarOpen = false;
+				}
+				else
+				{
+					videoPlayerSettingsClip.style.display = "block";
+					videoPlayerSettingsBar.style.bottom = "0px";
+					fullscreenBarOpen = true;
+				}
+			});
+			video.addEventListener("timeupdate", function() {
+				var pos = video.currentTime / video.duration;
+				timelineFull.style.width = pos * 100 + "%";
+				timelineKnob.style.left = pos * 100 + "%";
+				dateObj = new Date(Math.floor(video.currentTime) * 1000);
+				hours = dateObj.getUTCHours();
+				minutes = dateObj.getUTCMinutes();
+				seconds = dateObj.getSeconds();
+				// this is bad, and is only written this way for legacy
+				secondString = seconds.toString();
+				if (seconds < 10)
+				{
+					secondString = "0" + seconds.toString();
+				}
+				minuteString = minutes.toString()
+				if (minutes < 10 && video.duration >= 3600)
+				{
+					minuteString = "0" + minutes.toString()
+				}
+				timeString = minuteString + ':' + secondString;
+				if (video.duration >= 3600)
+				{
+					timeString = hours.toString() + ':' + minuteString + ':' + secondString;
+				}
+				videoTimestamp.innerText = timeString;
+			});
+			video.addEventListener("volumechange", function() {
+				volumeButton.style.backgroundImage = "url('/img/player/" + (Math.floor(video.volume * 3)) + ".png')";
+				volumeSliderFull.style.height = (video.volume * 100) + "%";
+				volumeSliderKnob.style.bottom = (video.volume * 100) + "%";
+			});
+			volumeButton.addEventListener("click", function() {
+				if (volumeBarOpen)
+				{
+					videoPlayerVolumeClip.style.display = "none";
+					videoPlayerVolumeBar.style.bottom = "-201px";
+					volumeBarOpen = false;
+				}
+				else
+				{
+					videoPlayerVolumeClip.style.display = "block";
+					videoPlayerVolumeBar.style.bottom = "0px";
+					volumeBarOpen = true;
+				}
+			});
+			function play(e) {
+				if (video.paused || video.ended) {
+					video.play();
+					playPause.style.backgroundImage = "url('/img/player/playing.png')";
+				} else {
+					video.pause();
+					playPause.style.backgroundImage = "url('/img/player/paused.png')";
+				}
+			};
+			function resizeTimeline() {
+				timeline.style.width = (window.innerWidth - 210) + "px";
+				if (document.fullscreenElement)
+				{
+					videoPlayerFullscreen.style.backgroundImage = "url('/img/player/fullscreen2.png')";
+				}
+				else
+				{
+					videoPlayerFullscreen.style.backgroundImage = "url('/img/player/fullscreen1.png')";
+				}
+			};
+			resizeTimeline();
+			playPause.addEventListener("click", play);
+			videoPlayerFullscreen.addEventListener("click", function(e) {
+				if (!document.fullscreenElement) {
+					if (document.documentElement.requestFullscreen)
+					{
+						document.documentElement.requestFullscreen();
+					}
+					else if (document.documentElement.mozRequestFullScreen)
+					{
+						document.documentElement.mozRequestFullScreen();
+					}
+					else if (document.documentElement.webkitRequestFullscreen)
+					{
+						document.documentElement.webkitRequestFullscreen();
+					}
+					else if (document.documentElement.msRequestFullscreen)
+					{
+						document.body.msRequestFullscreen();
+					}
+				} else {
+					// Otherwise exit the full screen
+					if (document.exitFullscreen)
+					{
+						document.exitFullscreen();
+					}
+					else if (document.mozCancelFullScreen)
+					{
+						document.mozCancelFullScreen();
+					}
+					else if (document.webkitExitFullscreen)
+					{
+						document.webkitExitFullscreen();
+					}
+					else if (document.msExitFullscreen)
+					{
+						document.msExitFullscreen();
+					}
+				}
+			});
+			videoPlayerOverlay.addEventListener("click", play)
+			function changeVideoTime(e) {
+			if (video.duration == Number.NaN || video.duration == Number.POSITIVE_INFINITY || video.duration == Number.NEGATIVE_INFINITY) return;
+				var rect = timeline.getBoundingClientRect();
+				var pos = (e.pageX - rect.left) / timeline.offsetWidth;
+				video.currentTime = pos * video.duration;
+			}
+			timeline.addEventListener("click", changeVideoTime);
+			timeline.addEventListener("mousedown", function(e){
+				document.body.addEventListener("mousemove", changeVideoTime);
+			});
+			document.body.addEventListener("mouseup", function(e){
+				document.body.removeEventListener("mousemove", changeVideoTime);
+			});
+			function changeVolume(e)
+			{
+				var rect = volumeSlider.getBoundingClientRect();
+				var pos = (e.pageY - rect.bottom) / volumeSlider.offsetHeight;
+				var volume = 0 - pos;
+				// more legacy garbage
+				if (volume < 0)
+				{
+					video.volume = 0;
+				}
+				else if (volume > 1)
+				{
+					video.volume = 1;
+				}
+				else
+				{
+					video.volume = volume;
+				}
+			};
+			volumeSlider.addEventListener("mousedown", function(e){
+				document.body.addEventListener("mousemove", changeVolume);
+			});
+			document.body.addEventListener("mouseup", function(e){
+				document.body.removeEventListener("mousemove", changeVolume);
+			});
+			video.addEventListener("ended", function(e) {
+				playerMessage.style.display = "block";
+				playPause.style.backgroundImage = "url('/img/player/paused.png')";
+			});
+			video.addEventListener("playing", function(e) {
+				playerMessage.style.display = "none";
+			});
+			$(this).on('keydown', function(event) {
+				if (event.keyCode == 32) {
+					play(event);
+				}
+				else if (event.keyCode == 37) {
+					video.currentTime -= 5;
+				}
+				else if (event.keyCode == 38) {
+					if ((video.volume + 0.1) <= 1)
+					{
+						video.volume += 0.1;
+					}
+					else
+					{
+						video.volume = 1;
+					}
+				}
+				else if (event.keyCode == 39) {
+					video.currentTime += 5;
+				}
+				else if (event.keyCode == 40) {
+					if ((video.volume - 0.1) >= 0)
+					{
+						video.volume -= 0.1;
+					}
+					else
+					{
+						video.volume = 0;
+					}
+				}
+				else if (event.keyCode == 74) {
+					video.currentTime -= 10;
+				}
+				else if (event.keyCode == 76) {
+					video.currentTime += 10;
+				}
+			});
+
+			$(window).resize(function() {
+				resizeTimeline();
+			});
+		});
+	</script>
+</head>
+<body>
+	<div class="mainVideo">
+		<video id="videoPlayer" autoplay height="100%" width="100%">
+			<source src="/watch?id=@(id)&creator=@(creator)" type="video/mp4" />
+			@if (System.IO.File.Exists("D:\\Freestyle\\Debug\\net6.0\\data\\vidcaption\\" + creator + "\\" + id))
+			{
+				<track id="videoPlayerSubtitles" label="English" kind="subtitles" srclang="en" src="/caption?id=@(id)&creator=@(creator)" default />
+			}
+			<div class="videoPlayerUnsupported">
+				<span style="top: 50%; transform: translateY(-50%); position: relative;">
+					We're sorry, your browser does not support video playback. To play videos, you'll need to update your browser.
+				</span>
+			</div>
+		</video>
+
+		<div class="playerMessage" id="playerMessage">
+			<span>This video has ended.</span>
+		</div>
+
+		<div id="videoPlayerControl" class="videoPlayerControl">
+			<div id="videoPlayerOverlay" class="videoPlayerOverlay">
+			</div>
+			<div class="videoPlayerBar">
+				<div id="playPause" class="videoPlayerPlay" title="Play/Pause"></div>
+				<div id="volumeButton" class="videoPlayerVolume" title="Volume"></div>
+				<div id="videoPlayerVolumeClip" class="videoPlayerVolumeClip">
+					<div id="videoPlayerVolumeBar" class="videoPlayerVolumeBar">
+						<div id="volumeSlider" class="videoPlayerSlider volumeSlider" title="Change Volume">
+							<div id="volumeSliderFull" class="videoPlayerSliderFull volumeSliderFull">
+							</div>
+							<div id="volumeSliderKnob" class="videoPlayerSliderKnob volumeSliderKnob"></div>
+						</div>
+					</div>
+				</div>
+				<div id="timeline" class="videoPlayerSlider" title="Seek">
+					<div id="timelineFull" class="videoPlayerSliderFull">
+					</div>
+					<div id="timelineKnob" class="videoPlayerSliderKnob"></div>
+				</div>
+				<div id="videoTimestamp" class="videoPlayerTimestamp"></div>
+				<div id="videoPlayerSettings" class="videoPlayerSettings" title="Settings"></div>
+				<div id="videoPlayerSettingsClip" class="videoPlayerSettingsClip">
+					<div id="videoPlayerSettingsBar" class="videoPlayerSettingsBar">
+						<div>Looping:</div>
+						<div id="videoPlayerSettingsSpeedAmount"><input name="loopingSetting" type="checkbox" /></div>
+					</div>
+				</div>
+				<div id="videoPlayerFullscreen" class="videoPlayerFullscreen" title="Fullscreen"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

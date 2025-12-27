@@ -1,0 +1,329 @@
+﻿@page
+@using MediaStream.Controllers
+@using Newtonsoft.Json.Linq
+@model MediaStream.Pages.playModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+	string id = HttpContext.Request.Query["id"].ToString();
+	string creator = HttpContext.Request.Query["creator"].ToString();
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	FileStream stream = new(datapath + @"vidmeta\" + creator  + @"\" + id, FileMode.Open, FileAccess.Read);
+	byte[] result = new byte[stream.Length];
+	_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+	string data = System.Text.Encoding.UTF8.GetString(result);
+	JObject json = JObject.Parse(data);
+	FileStream personstream = new(datapath + @"profiles\" + json["creator"].ToString(), FileMode.Open, FileAccess.Read);
+	byte[] personresult = new byte[personstream.Length];
+	_ = await personstream.ReadAsync(personresult, 0, (int)personstream.Length);
+	string persondata = System.Text.Encoding.UTF8.GetString(personresult);
+	JObject personjson = JObject.Parse(persondata);
+	json.Add("creatordisplayName", (personjson["displayName"] != null) ? personjson["displayName"].ToString() : personjson["name"].ToString());
+	json.Add("creatorvids", personjson["vids"].ToString());
+	json.Add("creatorjoined", personjson["date"].ToString());
+	json.Add("creatorfollowers", personjson["followers"].ToString());
+	string rawdate = personjson["date"].ToString();
+	string creatorJoinedDate = DateTime.Parse(rawdate).ToString("M") + ", " + DateTime.Parse(rawdate).ToString("yyyy");
+	stream.Close();
+	stream.Dispose();
+	string iframeURL = string.Empty;
+	personstream.Close();
+	personstream.Dispose();
+	string PEMTArating = "P";
+	if (json["rating"] != null)
+	{
+		PEMTArating = json["rating"].ToString();
+	}
+	string[] strings = (json["tags"] != null) ? json["tags"].ToString().Split(",") : new string[0];
+	int girth = strings.Length - 1;
+	bool isCreator = false;
+	JObject userjson = new JObject();
+	JObject commentjson = JObject.Parse(@"{""comments"":[]" + "}");
+	string commentSauce = datapath + @"comments\" + creator + @"\" + id;
+	if (System.IO.File.Exists(commentSauce))
+	{
+		FileStream commentstream = new(commentSauce, FileMode.Open, FileAccess.Read);
+		byte[] commentresult = new byte[commentstream.Length];
+		_ = await commentstream.ReadAsync(commentresult, 0, (int)commentstream.Length);
+		string commentdata = System.Text.Encoding.UTF8.GetString(commentresult);
+		commentjson = JObject.Parse(commentdata);
+		commentstream.Close();
+		commentstream.Dispose();
+	}
+
+	if (HttpContext.Request.Cookies["username"] != null)
+	{
+		isCreator = HttpContext.Request.Cookies["username"].ToString() == json["creator"].ToString();
+		FileStream userstream = new(datapath + @"profiles\" + HttpContext.Request.Cookies["username"].ToString(), FileMode.Open, FileAccess.Read);
+		byte[] userresult = new byte[userstream.Length];
+		_ = await userstream.ReadAsync(userresult, 0, (int)userstream.Length);
+		string userdata = System.Text.Encoding.UTF8.GetString(userresult);
+		userjson = JObject.Parse(userdata);
+		userstream.Close();
+		userstream.Dispose();
+	}
+	if (json["public"] != null && json["public"].ToString() == "private" && !isCreator)
+	{
+		Response.Redirect("/unauthorized");
+	}
+	try
+	{
+		if (HttpContext.Request.Query["legacyplayer"].ToString() == "true")
+		{
+			iframeURL = "/LegacyVideoPlayer?id=" + id + "&creator=" + creator;
+		}
+		else
+		{
+			iframeURL = "/Player/VideoPlayer?id=" + id + "&creator=" + creator;
+		}
+	}
+	catch
+	{
+		iframeURL = "/Player/VideoPlayer?id=" + id + "&creator=" + creator;
+	}
+	if (HttpMethods.IsPost(Request.Method))
+	{
+		if (HttpContext.Request.Cookies["username"] != null)
+		{
+			if (Request.Form["descBox"].ToString().Length > 0 && Request.Form["descBox"].ToString().Length <= 4096)
+			{
+				JObject createcommentjson = JObject.Parse(@"{""vidID"":""" + id + @""",""vidDID"":""" + creator + @""",""comments"":[]}");
+				if (System.IO.File.Exists(commentSauce))
+				{
+					FileStream createcommentstream = new(commentSauce, FileMode.Open, FileAccess.Read);
+					byte[] createcommentresult = new byte[createcommentstream.Length];
+					_ = await createcommentstream.ReadAsync(createcommentresult, 0, (int)createcommentstream.Length);
+					createcommentstream.Close();
+					createcommentstream.Dispose();
+					string createcommentdata = System.Text.Encoding.UTF8.GetString(createcommentresult);
+					createcommentjson = JObject.Parse(createcommentdata);
+				}
+				Generator generator = new();
+				string newcommentDID = generator.GenerateDID();
+				JObject newcommentjson = JObject.Parse(@"{""did"":""" + newcommentDID + @""",""creatordid"":""" + HttpContext.Request.Cookies["username"] + @""",""subject"":""" + Request.Form["descBox"].ToString() + @""",""date"":""" + DateTime.UtcNow.ToString("s") + @""",""hideReview"":" + Request.Form["CommentScoreHide"].ToString() + @",""likes"":[],""dislikes"":[],""replies"":[]}");
+				((JArray)createcommentjson["comments"]).AddFirst(newcommentjson);
+				using (FileStream fs = System.IO.File.Create(commentSauce))
+				{
+					byte[] info = new System.Text.UTF8Encoding(true).GetBytes(createcommentjson.ToString());
+					fs.Write(info, 0, info.Length);
+				}
+				Response.Redirect("#");
+			}
+		}
+	}
+	Layout = "_Layout";
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<script>
+	function changeVideoSize() {
+		var videoFrame = document.getElementById('video_frame');
+		var videoPlayer = document.getElementById('vid_player');
+		var theatreButton = document.getElementById('btnLogin');
+		if (videoFrame.style.width == "640px") {
+			videoFrame.style.width = "930px";
+			videoFrame.style.height = "480px";
+			videoPlayer.style.marginRight = "0px";
+			theatreButton.src = "/img/Theatre1.png";
+		} else {
+			videoFrame.style.width = "640px";
+			videoFrame.style.height = "360px";
+			videoPlayer.style.marginRight = "10px";
+			theatreButton.src = "/img/Theatre0.png";
+		};
+	}
+
+	function showtoggle() {
+		var desc = document.getElementById('desc');
+		var showtoggle = document.getElementById('showtoggle');
+		if (desc.style.maxHeight == "90px")
+		{
+			desc.style.maxHeight = "100%";
+			showtoggle.innerText = "Show less";
+		}
+		else
+		{
+			desc.style.maxHeight = "90px";
+			showtoggle.innerText = "Show more...";
+		}
+	}
+
+	$(document).ready(function() {
+		var desc = document.getElementById('desc');
+		var showtoggle = document.getElementById('showtoggle');
+		if (desc.clientHeight >= 90)
+		{
+			showtoggle.parentElement.style.display = "block";
+		}
+	});
+</script>
+<tr>
+	<td colspan="2">
+		<div id="vid_player" style="margin-right: 10px;" class="left-side">
+			<div style="margin-bottom:5px;">
+				<img alt="@PEMTArating" src="~/img/rating@(PEMTArating).png" style="width: 18px; height: 18px; margin-right: 4px; float:left" />
+				@if (json["public"] != null && json["public"].ToString() != "public")
+				{
+					<img title="@((json["public"].ToString() == "unlist") ? "This video is unlisted. Only those with the link can see it." : "This video is private. Only those permitted can see it.")" src="~/img/@((json["public"].ToString() == "unlist") ? "unlisted" : "private").png" style="width: 20px; height: 18px; margin-right: 4px; float:left" />
+				}
+				<strong><span style="font-size:14px;"><span style="">@json["title"].ToString()</span></span></strong>
+				<input title="Change player size" type="image" src="/img/Theatre0.png" id="btnLogin" class="button" onclick="changeVideoSize()" style="float: right; margin-top: 0px;" />
+				@if (isCreator)
+				{
+					<a href="/edit?id=@(id)&creator=@creator">
+						<input title="Edit video metadata" type="image" src="/img/edit2.png" id="btnLogin" class="button" style="float: right;margin-top: 0px;margin-right: 8px;">
+					</a>
+				}
+			</div>
+
+			<div style="margin-bottom: 8px;"><iframe frameborder="0" scrolling="no" src="@iframeURL" id="video_frame" style="width: 640px; height: 360px;"></iframe></div>
+		</div>
+		<div id="vid_info" style="margin-right: 10px;" class="left-side">
+			<table border="0" cellpadding="0" cellspacing="0" style="width: 640px;">
+				<tbody>
+					<tr>
+						<td rowspan="2" style="width: 48px; height: 48px;"><img alt="" src="~/api/thumb?id=@json["creator"].ToString()&type=user" style="width: 48px; height: 48px;" /></td>
+						<td class="user" rowspan="2">
+							<div><a href="/profile?id=@json["creator"].ToString()"><span style="font-size:14px;"><strong>@json["creatordisplayName"].ToString()</strong></span></a></div>
+							
+							<div><strong>Followers:</strong> @json["creatorfollowers"].ToString()</div>
+							
+							<div><strong>Joined:</strong> @creatorJoinedDate</div>
+						</td>
+						<td rowspan="2" style="width: 256px;text-align:left;">
+							<div style="float: right;">
+								<div><span style="font-size:14px;"><strong>Ratings:</strong></span></div>
+
+								<div style="background-image: url('/img/StarRatingEmpty.png');width: 96px;height: 16px;margin-bottom: 2px;">
+									<div id="videoStarRating" style="background-image: url('/img/StarRating.png');width: 80%;height: 16px;margin-bottom: 2px;"></div>
+								</div>
+
+								<div class="smallgray">0 ratings</div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="smallgray" style="max-width: 640px;">
+				<span title="@json["views"].ToString() views">@MediaStream.Convert.ShortenNumber(json["views"].ToString()) views</span>&nbsp; &nbsp; 
+				<span title="@json["date"].ToString()">@MediaStream.Convert.GetTime(@json["date"].ToString())</span>
+				@if (strings.Length > 0 && !string.IsNullOrWhiteSpace(strings[0]))
+				{
+					<span>&nbsp;&nbsp;</span>
+					@for (int i = 0; i < girth; i++)
+					{
+						<span><a href="/tag?id=@strings[i]">#@strings[i]</a>, </span>
+					}
+					<span><a href="/tag?id=@strings[girth]">#@strings[girth]</a></span>					
+				}
+			</div>
+
+			<div id="desc" style="width: 640px; white-space: pre-line; overflow: hidden; max-height: 90px;">@json["desc"].ToString()</div>
+		
+			<div style="display: none;"><a href="#" onclick="showtoggle();" id="showtoggle">Show more...</a></div>
+		</div>
+		<div id="vid_ratings" style="margin-right: 10px;" class="left-side">
+			<table border="0" cellpadding="0" cellspacing="0" style="width: 640px;">
+				<tbody>
+					<tr>
+						<td style="width: 48px; height: 48px;">
+							<br />
+							<div style="margin-bottom:5px;">
+								<div class="homeheader">
+									<span style="font-size:14px;font-weight:bold;">Discussions and Reviews (@(commentjson["comments"].Count()))</span>
+									<div class="videoCommentSort">
+										<span class="smallgray">sort by: </span>
+										<select name="commentSort" id="commentSort"><option value="top" selected="&quot;selected&quot;">Top</option><option value="new">Newest</option><option value="old">Oldest</option></select>
+									</div>
+								</div>
+								<form id="form1" method="post">
+									<div>
+										<div style="float: left;">
+											<img alt="" src="/api/thumb?id=doofusmcgoofus&amp;type=user" style="width: 48px; height: 48px;">
+										</div>
+										<div style="margin-bottom: 5px;margin-left: 53px;">
+											<textarea placeholder="Share your thoughts..." style="display:block;width: calc(100% - 2px);resize: vertical;height: 46px;min-height: 46px;" maxlength="4096" name="descBox" id="descBox"></textarea>
+										</div>
+									</div>
+									<div>
+										<div style="float: left;"><input id="CommentScoreHide" name="CommentScoreHide" type="checkbox" style="margin: 0px 3px 0px 0px;"><label for="CommentScoreHide">Hide your rating?</label></div>
+										<div style=" float: right; "><input style="margin-right: 5px;" type="submit" value="Post"><input type="reset" value="Cancel"></div>
+									</div>
+									@Html.AntiForgeryToken()
+								</form>
+
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td style="width: 48px; height: 48px;">
+							<br />
+							<div style="margin-bottom:5px;">
+								<div>
+									@{
+										JArray comments = JArray.Parse(commentjson["comments"].ToString());
+									}
+									@foreach (JObject comment in comments)
+									{
+										FileStream commentpersonstream = new(datapath + @"profiles\" + comment["creatordid"].ToString(), FileMode.Open, FileAccess.Read);
+										byte[] commentpersonresult = new byte[commentpersonstream.Length];
+										_ = await commentpersonstream.ReadAsync(commentpersonresult, 0, (int)commentpersonstream.Length);
+										string commentpersondata = System.Text.Encoding.UTF8.GetString(commentpersonresult);
+										JObject commentpersonjson = JObject.Parse(commentpersondata);
+										commentpersonstream.Close();
+										commentpersonstream.Dispose();
+										<div class="videoComment" comment-id="@comment["did"]">
+											<div style=" min-height: 32px; padding-bottom: 2px; ">
+												<img alt="" src="/api/thumb?id=@comment["creatordid"].ToString()&amp;type=user" style="width: 32px;height: 32px;float: left;padding-right: 3px;">
+												<span><a href="profile?id=@comment["creatordid"].ToString()">@((commentpersonjson["displayName"] != null) ? commentpersonjson["displayName"].ToString() : commentpersonjson["name"].ToString())</a></span>
+												<span class="smallgray" style="float:right;font-style:italic;">0s</span>
+												<div class="smallgray" style="font-style:italic;">@("@" + commentpersonjson["name"].ToString() + "#" + @commentpersonjson["domain"].ToString())</div>
+											</div>
+											<div style="white-space: pre-line; overflow: hidden; ">@comment["subject"]</div>
+											<div>
+												<span class="videoCommentAction">
+													<a class="smallgray" href="#">Reply</a>
+												</span>
+												<span class="videoCommentAction">
+													<a href="#">Show all replies</a>
+												</span>
+												<span class="videoCommentAction">
+													<img alt="Like" src="/img/LikeButton.png" style="width: 16px;height: 16px;">
+													<span>@comment["likes"].Count()</span>
+												</span>
+												<span class="videoCommentAction">
+													<img alt="Dislike" src="/img/DislikeButton.png" style="width: 16px;height: 16px;">
+													<span>@comment["dislikes"].Count()</span>
+												</span>
+											</div>
+											<div class="videoReply"> </div>
+										</div>
+									}
+									@if (comments.Count == 0)
+									{
+										<div class="smallgray" style="font-style:italic;text-align: center;">It looks like nobody has said anything yet...</div>
+									}
+								</div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="right-side">
+			@if (false)
+			{
+				<div style="background: black; height:210px; margin-bottom: 16px;"><img style="height:210px; width:280px;" alt="Advertisement" src="~/img/AdBlockAd.png" /></div>
+			}
+			<div><strong><span style="font-size:14px;"><span style="">More From: @json["creatordisplayName"].ToString()</span></span></strong></div>
+
+			<div style="margin-bottom: 16px;">It looks like there&#39;s nothing here...</div>
+
+			<div><strong><span style="font-size:14px;"><span style="">Related Videos</span></span></strong></div>
+
+			<div style="margin-bottom: 16px;">It looks like there&#39;s nothing here...</div>
+		</div>
+
+	</td>
+</tr>

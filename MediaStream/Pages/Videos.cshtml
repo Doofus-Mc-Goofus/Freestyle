@@ -1,0 +1,161 @@
+﻿@page
+@using MediaStream.Controllers
+@using Newtonsoft.Json.Linq
+@using System.IO
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model MediaStream.Pages.IndexModel
+@{
+	Random random = new Random();
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	Layout = "_Layout";
+	string isTextBold(string key, string value, bool fuck = false)
+	{
+		if (TextRaw(key, value, fuck))
+		{
+			return "bold";
+		}
+		else
+		{
+			return "normal";
+		}
+	}
+	string isTextCol(string key, string value, bool fuck = false)
+	{
+		if (TextRaw(key, value, fuck))
+		{
+			return "color:black;";
+		}
+		else
+		{
+			return string.Empty;
+		}
+	}
+	bool TextRaw(string key, string value, bool fuck = false)
+	{
+		if (fuck && HttpContext.Request.Query[key] == Microsoft.Extensions.Primitives.StringValues.Empty)
+		{
+			return true;
+		}
+		string ogKey = HttpContext.Request.Query[key].ToString();
+		if (ogKey == value)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<tr>
+	<td>
+		<div style="float: left; width: 200px; padding-right: 10px;">
+		<div class="homeheader"><span style="font-size: 14px;"><strong>Categories</strong></span></div>
+		<div style="display: block; margin-bottom: 16px; ">
+			<div style="font-weight: @isTextBold("cat", "all", true); padding-bottom: 2px;"><a onclick="updateParam('cat', 'all')" href="#">All</a></div>
+				<div style="font-weight: @isTextBold("cat", "auto"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'auto')" href="#">Autos and Vehicles</a></div>
+				<div style="font-weight: @isTextBold("cat", "comedy"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'comedy')" href="#">Comedy</a></div>
+				<div style="font-weight: @isTextBold("cat", "education"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'education')" href="#">Education</a></div>
+				<div style="font-weight: @isTextBold("cat", "entertain"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'entertain')" href="#">Entertainment</a></div>
+				<div style="font-weight: @isTextBold("cat", "film"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'film')" href="#">Film & Animation</a></div>
+				<div style="font-weight: @isTextBold("cat", "tutorial"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'tutorial')" href="#">Tutorials & Style</a></div>
+				<div style="font-weight: @isTextBold("cat", "music"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'music')" href="#">Music</a></div>
+				<div style="font-weight: @isTextBold("cat", "news"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'news')" href="#">News & Politics</a></div>
+				<div style="font-weight: @isTextBold("cat", "blog"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'blog')" href="#">People & Blogs</a></div>
+				<div style="font-weight: @isTextBold("cat", "pet"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'pet')" href="#">Pets & Animals</a></div>
+				<div style="font-weight: @isTextBold("cat", "tech"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'tech')" href="#">Science & Technology</a></div>
+				<div style="font-weight: @isTextBold("cat", "sports"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'sports')" href="#">Sports</a></div>
+				<div style="font-weight: @isTextBold("cat", "travel"); padding-bottom: 2px;"><a onclick="updateParam('cat', 'travel')" href="#">Travel & Events</a></div>
+		</div>
+	</div>
+
+		<div style="display: table-cell;">
+			<div class="homeheader">
+				<span style="font-size:14px;">
+					<span style="font-weight: @isTextBold("sort", "recommended", true);"><a style="@isTextCol("sort", "recommended", true)" onclick="updateParam('sort', 'recommended')" href="#">Discover</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("sort", "latest");"><a style="@isTextCol("sort", "latest")" onclick="updateParam('sort', 'latest')" href="#">Latest</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("sort", "popular");"><a style="@isTextCol("sort", "popular")" onclick="updateParam('sort', 'popular')" href="#">Popular</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("sort", "random");"><a style="@isTextCol("sort", "random")" onclick="updateParam('sort', 'random')" href="#">Random</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("sort", "underreview");"><a style="@isTextCol("sort", "underreview")" onclick="updateParam('sort', 'underreview')" href="#">Under Review</a></span>
+				</span>
+			</div>
+		<hr/>
+		@{
+			List<JObject> videos = new List<JObject>();
+			string[] pickedVids = new string[8];
+			for (int i = 0; i < 20; i++)
+			{
+				string rawJSON = await MediaStream.Controllers.Feeds.RandomPublicVideoV2();
+				JObject parsedJson = JObject.Parse(rawJSON);
+				FileStream stream = new(datapath + @"vidmeta\" + parsedJson["creatorDID"].ToString() + @"\" + parsedJson["videoID"].ToString(), FileMode.Open, FileAccess.Read);
+				byte[] result = new byte[stream.Length];
+				_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+				string data = System.Text.Encoding.UTF8.GetString(result);
+				JObject json = JObject.Parse(data);
+				JObject finJson = JObject.Parse("{" + "}");
+				finJson.Add("title", json["title"].ToString());
+				finJson.Add("id", parsedJson["videoID"].ToString());
+				finJson.Add("views", json["views"].ToString());
+				finJson.Add("date", json["date"].ToString());
+				finJson.Add("creator", json["creator"].ToString());
+				finJson.Add("desc", json["desc"].ToString());
+				if (json["category"] != null)
+				{
+					finJson.Add("category", json["category"].ToString());
+				}
+				else
+				{
+					finJson.Add("category", "none");
+				}
+				if (json["rating"] != null)
+				{
+					finJson.Add("rating", json["rating"].ToString());
+				}
+				else
+				{
+					finJson.Add("rating", "p");
+				}
+				videos.Add(finJson);
+				stream.Close();
+				stream.Dispose();
+				FileStream personstream = new(datapath + @"profiles\" + json["creator"].ToString(), FileMode.Open, FileAccess.Read);
+				byte[] personresult = new byte[personstream.Length];
+				_ = await personstream.ReadAsync(personresult, 0, (int)personstream.Length);
+				string persondata = System.Text.Encoding.UTF8.GetString(personresult);
+				JObject personjson = JObject.Parse(persondata);
+				finJson.Add("creatordisplayName", (personjson["displayName"] != null) ? personjson["displayName"].ToString() : personjson["name"].ToString());
+				personstream.Close();
+				personstream.Dispose();
+			}
+		}
+		<div style="display: inline-block;">
+			@foreach (JObject video in videos)
+			{
+				<div class="videoThumbnail">
+					<a href="/play?id=@video["id"].ToString()&creator=@video["creator"].ToString()" class="videoThumbnailActual">
+						<div class="videoThumbnailImage">
+							<img src="~/api/thumb?id=@video["id"].ToString()&type=vid" style="width: 128px; height: 96px;" />
+						</div>
+						<div class="videoThumbnailOverlay">
+							@video["desc"]
+							<div class="videoThumbnailGenre">@GetLang.GetDisplayName(video["category"].ToString())</div>
+							<img alt="@(video["rating"])" src="/img/rating@(video["rating"]).png" class="videoThumbnailRating">
+						</div>
+					</a>
+
+					<div style="width: 128px;height:32px;white-space: wrap;overflow: hidden;">
+						<a href="/play?id=@video["id"].ToString()&creator=@video["creator"].ToString()">@video["title"].ToString()</a>
+					</div>
+
+					<div class="smallgray">@(MediaStream.Convert.GetTime(video["date"].ToString()))</div>
+
+					<div class="smallgray">@video["views"].ToString() views</div>
+
+					<div><a href="/profile?id=@video["creator"].ToString()">@video["creatordisplayName"].ToString()</a></div>
+				</div>
+			}
+			<div style="width:max-content;"></div>
+		</div>
+		<div>&nbsp;</div>
+	</div>
+	</td>
+</tr>

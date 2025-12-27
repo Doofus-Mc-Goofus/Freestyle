@@ -1,0 +1,141 @@
+﻿@page
+@using Newtonsoft.Json.Linq
+@using System.IO
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model MediaStream.Pages.IndexModel
+@{
+	Random random = new Random();
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	Layout = "_Layout";
+	FileStream teststream = new(datapath + @"featured", FileMode.Open, FileAccess.Read);
+	byte[] testresult = new byte[teststream.Length];
+	_ = await teststream.ReadAsync(testresult, 0, (int)teststream.Length);
+	string testdata = System.Text.Encoding.UTF8.GetString(testresult);
+	teststream.Close();
+	teststream.Dispose();
+	JObject testjson = JObject.Parse(testdata);
+	string testid = testjson["vid"].ToString();
+	FileStream featstream = new(datapath + @"vidmeta\" + testid, FileMode.Open, FileAccess.Read);
+	byte[] featresult = new byte[featstream.Length];
+	_ = await featstream.ReadAsync(featresult, 0, (int)featstream.Length);
+	string featdata = System.Text.Encoding.UTF8.GetString(featresult);
+	featstream.Close();
+	featstream.Dispose();
+	JObject featjson = JObject.Parse(featdata);
+	featjson.Add("id", testid);
+	string isTextBold(string key, string value, bool fuck = false)
+	{
+		if (TextRaw(key, value, fuck))
+		{
+			return "bold";
+		}
+		else
+		{
+			return "normal";
+		}
+	}
+	string isTextCol(string key, string value, bool fuck = false)
+	{
+		if (TextRaw(key, value, fuck))
+		{
+			return "color:black;";
+		}
+		else
+		{
+			return string.Empty;
+		}
+	}
+	bool TextRaw(string key, string value, bool fuck = false)
+	{
+		if (fuck && HttpContext.Request.Query[key] == Microsoft.Extensions.Primitives.StringValues.Empty)
+		{
+			return true;
+		}
+		string ogKey = HttpContext.Request.Query[key].ToString();
+		if (ogKey == value)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	long resultamount = 0;
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<tr>
+	<td>
+		<div style="margin-bottom:5px;">
+			<strong><span style="font-size:14px;"><span style="">Search results for &quot;@(HttpContext.Request.Query["q"].ToString())&quot;</span></span></strong>
+		</div>
+		@if (false)
+		{
+			<div style="float: left; width: 100px; padding-right: 10px;">
+				<div class="homeheader"><span style="font-size: 14px;"><strong>Sort by</strong></span></div>
+				<div style="display: block; margin-bottom: 16px; ">
+					<div style="font-weight: @isTextBold("sort", "relevant", true); padding-bottom: 2px;"><a onclick="updateParam('sort', 'relevant')" href="#">Relevance</a></div>
+					<div style="font-weight: @isTextBold("sort", "date"); padding-bottom: 2px;"><a onclick="updateParam('sort', 'date')" href="#">Upload date</a></div>
+					<div style="font-weight: @isTextBold("sort", "views"); padding-bottom: 2px;"><a onclick="updateParam('sort', 'views')" href="#">View count</a></div>
+					<div style="font-weight: @isTextBold("sort", "rate"); padding-bottom: 2px;"><a onclick="updateParam('sort', 'rate')" href="#">Ratings</a></div>
+				</div>
+			</div>
+		}
+
+		<div style="display: table-cell;">
+			<div class="homeheader">
+				<span style="font-size:14px;">
+					<span style="font-weight: @isTextBold("filt", "all", true);"><a style="@isTextCol("filt", "all", true)" onclick="updateParam('filt', 'all')" href="#">All</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("filt", "videos");"><a style="@isTextCol("filt", "videos")" onclick="updateParam('filt', 'videos')" href="#">Videos</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("filt", "people");"><a style="@isTextCol("filt", "people")" onclick="updateParam('filt', 'people')" href="#">People</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("filt", "groups");"><a style="@isTextCol("filt", "groups")" onclick="updateParam('filt', 'groups')" href="#">Groups</a></span><span class="textseparator"> | </span><span style="font-weight: @isTextBold("filt", "playlists");"><a style="@isTextCol("filt", "playlists")" onclick="updateParam('filt', 'playlists')" href="#">Playlists</a></span>
+				</span>
+			</div>
+			<hr/>
+			@{
+				List<JObject> videos = new List<JObject>();
+				DirectoryInfo directoryInfo = new DirectoryInfo(datapath + @"vidmeta\");
+				FileInfo[] files = directoryInfo.GetFiles();
+				string[] pickedVids = new string[8];
+				for (int i = 0; i < 0; i++)
+				{
+					var id = random.Next(0, files.Count());
+					FileStream stream = new(files[id].FullName, FileMode.Open, FileAccess.Read);
+					byte[] result = new byte[stream.Length];
+					_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+					string data = System.Text.Encoding.UTF8.GetString(result);
+					JObject json = JObject.Parse(data);
+					JObject finJson = JObject.Parse("{" + "}");
+					finJson.Add("title", json["title"].ToString());
+					finJson.Add("id", files[id].Name);
+					finJson.Add("views", json["views"].ToString());
+					finJson.Add("date", json["date"].ToString());
+					finJson.Add("creator", json["creator"].ToString());
+					videos.Add(finJson);
+					stream.Close();
+					stream.Dispose();
+				}
+			}
+			<div class="smallgray">It looks like there's nothing here...</div>
+			<div style="display: inline-block;">
+				@foreach (JObject video in videos)
+				{
+					<div class="videoThumbnail">
+						<div><a href="/play?id=@video["id"].ToString()"><img alt="" src="~/api/thumb?id=@video["id"].ToString()&type=vid" style="width: 128px; height: 96px;" /></a></div>
+
+						<div style="width: 128px;height:30px;white-space: wrap;overflow: hidden;">
+							<a href="/play?id=@video["id"].ToString()">@video["title"].ToString()</a>
+						</div>
+
+						<div class="smallgray">@(MediaStream.Convert.GetTime(video["date"].ToString()))</div>
+
+						<div class="smallgray">@video["views"].ToString() views</div>
+
+						<div><a href="/profile?id=@video["creator"].ToString()">@video["creator"].ToString()</a></div>
+					</div>
+				}
+				<div style="width:max-content;"></div>
+			</div>
+			<div>&nbsp;</div>
+		</div>
+	</td>
+</tr>

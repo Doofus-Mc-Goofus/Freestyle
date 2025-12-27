@@ -1,0 +1,226 @@
+﻿@page
+@using MediaStream.Controllers
+@using Newtonsoft.Json.Linq
+@using System.IO
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@model MediaStream.Pages.IndexModel
+@{
+	Random random = new Random();
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	Layout = "_Layout";
+	FileStream teststream = new(datapath + @"featured", FileMode.Open, FileAccess.Read);
+	byte[] testresult = new byte[teststream.Length];
+	_ = await teststream.ReadAsync(testresult, 0, (int)teststream.Length);
+	string testdata = System.Text.Encoding.UTF8.GetString(testresult);
+	teststream.Close();
+	teststream.Dispose();
+	JObject testjson = JObject.Parse(testdata);
+	string testid = testjson["vid"].ToString();
+	FileStream featstream = new(datapath + @"vidmeta\" + testjson["creator"].ToString() + @"\" + testid, FileMode.Open, FileAccess.Read);
+	byte[] featresult = new byte[featstream.Length];
+	_ = await featstream.ReadAsync(featresult, 0, (int)featstream.Length);
+	string featdata = System.Text.Encoding.UTF8.GetString(featresult);
+	featstream.Close();
+	featstream.Dispose();
+	JObject featjson = JObject.Parse(featdata);
+	featjson.Add("id", testid);
+	if (featjson["category"] == null)
+	{
+		featjson.Add("category", "none");
+	}
+	if (featjson["rating"] == null)
+	{
+		featjson.Add("rating", "p");
+	}
+	FileStream FEATpersonstream = new(datapath + @"profiles\" + featjson["creator"].ToString(), FileMode.Open, FileAccess.Read);
+	byte[] FEATpersonresult = new byte[FEATpersonstream.Length];
+	_ = await FEATpersonstream.ReadAsync(FEATpersonresult, 0, (int)FEATpersonstream.Length);
+	string FEATpersondata = System.Text.Encoding.UTF8.GetString(FEATpersonresult);
+	JObject FEATpersonjson = JObject.Parse(FEATpersondata);
+	featjson.Add("creatordisplayName", (FEATpersonjson["displayName"] != null) ? FEATpersonjson["displayName"].ToString() : FEATpersonjson["name"].ToString());
+	FEATpersonstream.Close();
+	FEATpersonstream.Dispose();
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<tr>
+	<td>
+		<div class="homeheader"><span style="font-size:14px;"><strong>Discover Videos</strong></span></div>
+		<hr style="margin-right:75px;"/>
+		@{
+			List<JObject> videos = new List<JObject>();
+			string[] pickedVids = new string[8];
+			for (int i = 0; i < 8; i++)
+			{
+				string rawJSON = await MediaStream.Controllers.Feeds.RandomPublicVideoV2();
+				JObject parsedJson = JObject.Parse(rawJSON);
+				FileStream stream = new(datapath + @"vidmeta\" + parsedJson["creatorDID"].ToString() + @"\" + parsedJson["videoID"].ToString(), FileMode.Open, FileAccess.Read);
+				byte[] result = new byte[stream.Length];
+				_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+				string data = System.Text.Encoding.UTF8.GetString(result);
+				JObject json = JObject.Parse(data);
+				JObject finJson = JObject.Parse("{" + "}");
+				finJson.Add("title", json["title"].ToString());
+				finJson.Add("id", parsedJson["videoID"].ToString());
+				finJson.Add("views", json["views"].ToString());
+				finJson.Add("date", json["date"].ToString());
+				finJson.Add("creator", json["creator"].ToString());
+				finJson.Add("desc", json["desc"].ToString());
+				if (json["category"] != null)
+				{
+					finJson.Add("category", json["category"].ToString());
+				}
+				else
+				{
+					finJson.Add("category", "none");
+				}
+				if (json["rating"] != null)
+				{
+					finJson.Add("rating", json["rating"].ToString());
+				}
+				else
+				{
+					finJson.Add("rating", "p");
+				}
+				videos.Add(finJson);
+				stream.Close();
+				stream.Dispose();
+				FileStream personstream = new(datapath + @"profiles\" + json["creator"].ToString(), FileMode.Open, FileAccess.Read);
+				byte[] personresult = new byte[personstream.Length];
+				_ = await personstream.ReadAsync(personresult, 0, (int)personstream.Length);
+				string persondata = System.Text.Encoding.UTF8.GetString(personresult);
+				JObject personjson = JObject.Parse(persondata);
+				finJson.Add("creatordisplayName", (personjson["displayName"] != null) ? personjson["displayName"].ToString() : personjson["name"].ToString());
+				personstream.Close();
+				personstream.Dispose();
+			}
+		}
+		<div style="display: inline-block;">
+			@foreach (JObject video in videos)
+			{
+				<div class="videoThumbnail">
+					<a href="/play?id=@video["id"].ToString()&creator=@video["creator"].ToString()" class="videoThumbnailActual">
+						<div class="videoThumbnailImage">
+							<img src="~/api/thumb?id=@video["id"].ToString()&type=vid" style="width: 128px; height: 96px;" />
+						</div>
+						<div class="videoThumbnailOverlay">
+							@video["desc"]
+							<div class="videoThumbnailGenre">@GetLang.GetDisplayName(video["category"].ToString())</div>
+							<img alt="@(video["rating"])" src="/img/rating@(video["rating"]).png" class="videoThumbnailRating">
+						</div>
+					</a>
+
+					<div style="width: 128px;height:32px;white-space: wrap;overflow: hidden;"><a href="/play?id=@video["id"].ToString()&creator=@video["creator"].ToString()">@video["title"].ToString()</a></div>
+
+					<div class="smallgray">@(MediaStream.Convert.GetTime(video["date"].ToString()))</div>
+
+					<div class="smallgray">@video["views"].ToString() views</div>
+
+					<div><a href="/profile?id=@video["creator"].ToString()">@video["creatordisplayName"].ToString()</a></div>
+				</div>
+			}
+			<div style="width:max-content;"></div>
+		</div>
+
+		<div>&nbsp;</div>
+
+		<div class="homeheader"><span style="font-size: 14px;"><strong>Discover People</strong></span></div>
+		<hr style="margin-right:75px;" />
+		@{
+			List<JObject> people = new List<JObject>();
+			DirectoryInfo persondirectoryInfo = new DirectoryInfo(datapath + @"profiles\");
+			FileInfo[] personfiles = persondirectoryInfo.GetFiles();
+			for (int i = 0; i < 4; i++)
+			{
+				var id = random.Next(0, personfiles.Count());
+				FileStream stream = new(personfiles[id].FullName, FileMode.Open, FileAccess.Read);
+				byte[] result = new byte[stream.Length];
+				_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+				string data = System.Text.Encoding.UTF8.GetString(result);
+				JObject json = JObject.Parse(data);
+				JObject finJson = JObject.Parse("{" + "}");
+				finJson.Add("name", json["name"].ToString());
+				finJson.Add("did", json["did"].ToString());
+				finJson.Add("displayName", ((json["displayName"] != null) ? json["displayName"].ToString() : json["name"].ToString()));
+				finJson.Add("bio", json["bio"].ToString());
+				finJson.Add("views", json["views"].ToString());
+				finJson.Add("vids", JArray.Parse(json["videosMade"].ToString()).Count.ToString());
+				people.Add(finJson);
+				stream.Close();
+				stream.Dispose();
+			}
+		}
+		<div style="display: inline-block;">
+			@foreach (JObject person in people)
+			{
+				<div style="display: block; float: left; margin-bottom: 8px; width: 300px;">
+					<table border="0" cellpadding="0" cellspacing="0" style="float: left;">
+						<tbody>
+							<tr>
+								<td colspan="2"><a title="@person["name"].ToString()" href="/profile?id=@person["did"].ToString()">@person["displayName"].ToString()</a></td>
+							</tr>
+							<tr>
+								<td rowspan="2"><a href="/profile?id=@person["did"].ToString()"><img alt="" src="~/api/thumb?id=@person["name"].ToString()&type=user" style="width: 64px; height: 64px;" /></a></td>
+								<td class="user" rowspan="2">
+									<div style="height:32px; overflow: hidden">@person["bio"].ToString()</div>
+									
+									<div class="smallgray">@person["vids"].ToString() Videos</div>
+
+									<div class="smallgray">@person["views"].ToString() Views</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			}
+		</div>
+		<div>&nbsp;</div>
+	</td>
+	<td style="width: 280px;">
+		@if (false)
+		{
+			<div style="background: black; height:210px; margin-bottom: 16px;"><img style="height:210px; width:280px;" alt="Advertisement" src="~/img/AdBlockAd.png" /></div>
+		}
+		<div class="homeheader"><span style="font-size: 14px;"><strong>Featured Video</strong></span></div>
+		<div style="display: block; margin-bottom: 16px; ">
+			<a href="/play?id=@featjson["id"].ToString()&creator=@featjson["creator"].ToString()" class="videoFeatThumbnailActual">
+				<div class="videoThumbnailImage">
+					<img src="~/api/thumb?id=@featjson["id"].ToString()&type=vid" style="width: 280px; height: 210px;" />
+				</div>
+				<div class="videoThumbnailOverlay videoFeatThumbnailOverlay">
+					@featjson["desc"]
+					<div class="videoThumbnailGenre">@GetLang.GetDisplayName(featjson["category"].ToString())</div>
+					<img alt="@(featjson["rating"])" src="/img/rating@(featjson["rating"]).png" class="videoThumbnailRating">
+				</div>
+			</a>
+			<div style="height:30px;"><a href="/play?id=@featjson["id"].ToString()&creator=@featjson["creator"].ToString()">@featjson["title"].ToString()</a></div>
+
+			<div class="smallgray">@(MediaStream.Convert.GetTime(featjson["date"].ToString()))</div>
+
+			<div class="smallgray">@featjson["views"].ToString() views</div>
+
+			<div><a href="/profile?id=@featjson["creator"].ToString()">@featjson["creatordisplayName"].ToString()</a></div>
+		</div>
+		@if (HttpContextAccessor.HttpContext.Request.Cookies["session"] == null)
+		{
+			<div style="border-style: solid; border-color: black; border-width: 1px; padding: 8px;margin-bottom: 16px;">
+				<div style="text-align: center;"><font color="#555555"><b>Want to upload your own videos?</b></font></div>
+
+				<div style="text-align: center;"><a href="/signup">Create an Account</a> or <a href="/login">Sign In</a> Now!</div>
+			</div>
+		}
+		<div style="border-style: solid; border-color: #77f; border-width: 1px; padding: 8px; background-color: #bbf;">
+			<div><span style="font-size:14px;color:#33c;"><b>What&#39;s New</b></span></div>
+
+			<div>&nbsp;</div>
+
+			<div><span style="color:#3333cc;">Private Alpha Testing</span></div>
+
+			<div>wow! so cool</div>
+		</div>
+	</td>
+</tr>
+
+
+

@@ -1,0 +1,106 @@
+﻿@page
+@using Newtonsoft.Json.Linq
+@using Microsoft.AspNetCore.Http
+@using MediaStream.Controllers
+@model MediaStream.Pages.signupModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+	string message = string.Empty;
+	if (HttpMethods.IsGet(Request.Method))
+	{
+		if (HttpContextAccessor.HttpContext.Request.Cookies["username"] != null)
+		{
+			Response.Redirect("/my");
+		}
+	}
+	else if (HttpMethods.IsPost(Request.Method))
+	{
+		try
+		{
+			string username = Request.Form["usernameBox"];
+			string password = Request.Form["passwordBox"];
+			string email = Request.Form["emailBox"];
+			string DID = "did-";
+			Generator generator = new();
+			DID += generator.GenerateDID();
+			if (username.Length <= 20 && password.Length <= 50 && email.Length <= 50)
+			{
+				string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+				if (!System.IO.File.Exists(datapath + @"user\" + username))
+				{
+					// Create files
+					using (FileStream fs = System.IO.File.Create(datapath + @"user\" + DID))
+					{
+						byte[] info = new System.Text.UTF8Encoding(true).GetBytes("{\"password\":\"" + password + "\",\"messageCount\":\"0\",\"messages\":[],\"videosMade\":[],\"vidswatched\":[]}");
+						fs.Write(info, 0, info.Length);
+					}
+					using (FileStream fs = System.IO.File.Create(datapath + @"profiles\" + DID))
+					{
+						byte[] info = new System.Text.UTF8Encoding(true).GetBytes("{\"name\":\"" + username + "\",\"domain\":\"thefreestyle.net\",\"bio\":\"\",\"views\":\"0\",\"vids\":\"0\",\"followers\":\"0\",\"following\":\"0\",\"vidswatchedShow\":\"False\",\"date\":\"" + DateTime.UtcNow.ToString("s") + "\",\"lastseen\":\"" + DateTime.UtcNow.ToString("s") + "\",\"videosMade\":[],\"followersList\":[],\"followingList\":[]}");
+						fs.Write(info, 0, info.Length);
+					}
+					using (FileStream fs = System.IO.File.Create(datapath + @"redirect\" + username))
+					{
+						byte[] info = new System.Text.UTF8Encoding(true).GetBytes(DID);
+						fs.Write(info, 0, info.Length);
+					}
+					_ = System.IO.Directory.CreateDirectory(datapath + @"comments\" + DID + @"\");
+					_ = System.IO.Directory.CreateDirectory(datapath + @"playlists\" + DID + @"\");
+					_ = System.IO.Directory.CreateDirectory(datapath + @"vidmeta\" + DID + @"\");
+					_ = System.IO.Directory.CreateDirectory(datapath + @"vidcaption\" + DID + @"\");
+					_ = System.IO.Directory.CreateDirectory(datapath + @"vids\" + DID + @"\");
+					// Log in
+					Response.Cookies.Append("username", DID);
+					Response.Cookies.Append("password", password);
+					Response.Cookies.Append("session", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+					Response.Redirect("/my");
+				}
+				else
+				{
+					throw new Exception("This username is taken");
+				}
+			}
+			BadRequest();
+		}
+		catch (Exception ex)
+		{
+			message = ex.Message.ToString();
+		}
+	}
+	Layout = "_Layout";
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<tr>
+	<td colspan="2">
+		<form id="form1" method="post">
+			<div><span style="font-size: 14px;"><b>Create an Account:</b></span></div>
+
+			<div>&nbsp;</div>
+
+			<div>Username:</div>
+
+			<div><input maxlength="20" name="usernameBox" size="30" type="text" /></div>
+
+			<div>&nbsp;</div>
+
+			<div>Email:</div>
+
+			<div><input maxlength="50" name="emailBox" size="30" type="email" /></div>
+
+			<div>&nbsp;</div>
+
+			<div>Password:</div>
+
+			<div><input maxlength="50" name="passwordBox" size="30" type="password" /></div>
+
+			<div><span style="color:#B22222;" id="errorText">@message</span></div>
+
+			<div>&nbsp;</div>
+
+			<div><input name="signinButton" type="submit" value="Sign Up" /></div>
+			@Html.AntiForgeryToken()
+		</form>
+	</td>
+</tr>

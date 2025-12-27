@@ -1,0 +1,286 @@
+﻿@page
+@using Newtonsoft.Json.Linq
+@using Microsoft.AspNetCore.Http
+@model MediaStream.Pages.EditModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+	string message = string.Empty;
+	string successmessage = string.Empty;
+	bool isDraft = false;
+	string id = HttpContext.Request.Query["id"].ToString();
+	string creator = HttpContext.Request.Query["creator"].ToString();
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	FileStream stream = new(datapath + @"vidmeta\" + creator + @"\" + id, FileMode.Open, FileAccess.Read);
+	byte[] result = new byte[stream.Length];
+	_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+	string data = System.Text.Encoding.UTF8.GetString(result);
+	JObject json = JObject.Parse(data);
+	stream.Close();
+	stream.Dispose();
+	if (HttpContextAccessor.HttpContext.Request.Cookies["username"] == null)
+	{
+		Response.Redirect("/login");
+	}
+	else if (HttpContextAccessor.HttpContext.Request.Cookies["username"].ToString() != json["creator"].ToString())
+	{
+		Response.Redirect("/unauthorized");
+	}
+	if (json["draft"] != null)
+	{
+		isDraft = bool.Parse(json["draft"].ToString());
+	}
+	if (json["public"] == null)
+	{
+		json.Add("public", "public");
+	}
+	if (json["tags"] == null)
+	{
+		json.Add("tags", string.Empty);
+	}
+	if (json["category"] == null)
+	{
+		json.Add("category", "none");
+	}
+	if (json["commentPerm"] == null)
+	{
+		json.Add("commentPerm", "2");
+	}
+	if (json["vidRespPerm"] == null)
+	{
+		json.Add("vidRespPerm", "2");
+	}
+	if (json["rating"] == null)
+	{
+		json.Add("rating", "e");
+	}
+	string category = json["category"].ToString();
+	string visibility = json["public"].ToString();
+	string commentPerm = json["commentPerm"].ToString();
+	string vidRespPerm = json["vidRespPerm"].ToString();
+	string rating = json["rating"].ToString();
+	if (HttpMethods.IsGet(Request.Method))
+	{
+
+	}
+	else if (HttpMethods.IsPost(Request.Method))
+	{
+		try
+		{
+			if (HttpContextAccessor.HttpContext.Request.Cookies["username"] != null && HttpContextAccessor.HttpContext.Request.Cookies["username"].ToString() == json["creator"].ToString())
+			{
+				// some failsafes are included for security reasons
+				string titleForm = Request.Form["titleBox"].ToString();
+				if (titleForm.Length <= 30)
+				{
+					json["title"] = titleForm;
+				}
+				string descForm = Request.Form["descBox"].ToString();
+				if (descForm.Length <= 4096)
+				{
+					json["desc"] = descForm;
+				}
+				string tagsForm = Request.Form["tagBox"].ToString();
+				if (tagsForm.Length <= 512)
+				{
+					json["tags"] = tagsForm;
+				}
+				string categoryForm = Request.Form["category"].ToString();
+				if (categoryForm == "auto" || categoryForm == "comedy" || categoryForm == "education" || categoryForm == "entertain" || categoryForm == "film" || categoryForm == "tutorial" || categoryForm == "music" || categoryForm == "news" || categoryForm == "blog" || categoryForm == "pet" || categoryForm == "tech" || categoryForm == "sports" || categoryForm == "travel" || categoryForm == "none")
+				{
+					json["category"] = categoryForm;
+				}
+				string visibilityForm = Request.Form["visibility"].ToString();
+				if (visibilityForm == "public" || visibilityForm == "unlist" || visibilityForm == "private")
+				{
+					json["public"] = visibilityForm;
+				}
+				string permsForm = Request.Form["perms"].ToString();
+				if (permsForm == "0" || permsForm == "1" || permsForm == "2")
+				{
+					json["commentPerm"] = permsForm;
+				}
+				string vidRespForm = Request.Form["vidResp"].ToString();
+				if (vidRespForm == "0" || vidRespForm == "1" || vidRespForm == "2")
+				{
+					json["vidRespPerm"] = vidRespForm;
+				}
+				string ratingForm = Request.Form["rating"].ToString();
+				if (ratingForm == "e" || ratingForm == "t" || ratingForm == "m" || ratingForm == "a")
+				{
+					json["rating"] = ratingForm;
+				}
+				if (isDraft)
+				{
+					json.Remove("draft");
+				}
+				using (FileStream fs = System.IO.File.Create(datapath + @"vidmeta\" + creator + @"\" + id))
+				{
+					byte[] info = new System.Text.UTF8Encoding(true).GetBytes(json.ToString());
+					fs.Write(info, 0, info.Length);
+				}
+				FileStream creatorstream = new(datapath + @"profiles\" + json["creator"], FileMode.Open, FileAccess.Read);
+				byte[] creatorresult = new byte[creatorstream.Length];
+				_ = await creatorstream.ReadAsync(creatorresult, 0, (int)creatorstream.Length);
+				string creatordata = System.Text.Encoding.UTF8.GetString(creatorresult);
+				JObject creatorjson = JObject.Parse(creatordata);
+				creatorstream.Close();
+				creatorstream.Dispose();
+				if (Request.Form["visibility"].ToString() == "public")
+				{
+					if (!creatorjson["videosMade"].ToString().Contains("\"" + id + "\""))
+					{
+						((JArray)creatorjson["videosMade"]).AddFirst(id);
+					}
+				}
+				else
+				{
+					if (creatorjson["videosMade"].ToString().Contains("\"" + id + "\""))
+					{
+						JToken item = creatorjson["videosMade"].FirstOrDefault(arr => arr.Type == JTokenType.String && arr.Value<string>() == id);
+						((JArray)creatorjson["videosMade"]).Remove(item);
+					}
+				}
+				using (FileStream fs = System.IO.File.Create(datapath + @"profiles\" + json["creator"]))
+				{
+					byte[] info = new System.Text.UTF8Encoding(true).GetBytes(creatorjson.ToString());
+					fs.Write(info, 0, info.Length);
+				}
+				Response.Redirect("#");
+			}
+		}
+		catch (Exception ex)
+		{
+			message = ex.Message.ToString();
+			Console.WriteLine(ex.ToString());
+		}
+	}
+
+	Layout = "_Layout";
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<style>
+	select {
+		width: 160px;
+	}
+</style>
+<tr>
+	<td colspan="2">
+		<div id="VideoDiv">
+			<form id="form1" method="post">
+				<div><span style="font-size: 14px;"><b>Edit Video</b></span></div>
+				<div>&nbsp;</div>
+				<div style="height: 620px;">
+					<div style="float:left; width:500px;">
+						<div>Title:</div>
+						<div><input placeholder="Your video's title..." style="width:500px;" maxlength="30" name="titleBox" id="titleBox" size="30" type="text" value="@json["title"].ToString()"/></div>
+						<div>&nbsp;</div>
+						<div>Description:</div>
+						<div><textarea placeholder="Describe your video..." style="width:500px;resize:none;min-height:200px;" maxlength="4096" name="descBox" id="descBox" cols="33" rows="10">@json["desc"].ToString()</textarea></div>
+						<div>&nbsp;</div>
+						<div>Tags:</div>
+						<div><textarea placeholder="Relevant keywords of your video (seperated by commas)" style="width:500px;resize:none;min-height:100px;height:100px;" maxlength="512" name="tagBox" id="tagBox" cols="6" rows="10">@json["tags"].ToString()</textarea></div>
+						<div>&nbsp;</div>
+						<div>Category:</div>
+						<div>
+							<select name="category" id="category">
+								<option value="none" @((category == "none") ? "selected=\"selected\"" : string.Empty)>None</option>
+								<option value="auto" @((category == "auto") ? "selected=\"selected\"" : string.Empty)> Autos &amp; Vehicles</option>
+								<option value="comedy" @((category == "comedy") ? "selected=\"selected\"" : string.Empty)>Comedy</option>
+								<option value="education" @((category == "education") ? "selected=\"selected\"" : string.Empty)>Education</option>
+								<option value="entertain" @((category == "entertain") ? "selected=\"selected\"" : string.Empty)>Entertainment</option>
+								<option value="film" @((category == "film") ? "selected=\"selected\"" : string.Empty)>Film &amp; Animation</option>
+								<option value="tutorial" @((category == "tutorial") ? "selected=\"selected\"" : string.Empty)>Tutorials &amp; Style</option>
+								<option value="music" @((category == "music") ? "selected=\"selected\"" : string.Empty)>Music</option>
+								<option value="news" @((category == "news") ? "selected=\"selected\"" : string.Empty)>News &amp; Politics</option>
+								<option value="blog" @((category == "blog") ? "selected=\"selected\"" : string.Empty)>People &amp; Blogs</option>
+								<option value="pet" @((category == "pet") ? "selected=\"selected\"" : string.Empty)>Pets &amp; Animals</option>
+								<option value="tech" @((category == "tech") ? "selected=\"selected\"" : string.Empty)>Science &amp; Technology</option>
+								<option value="sports" @((category == "sports") ? "selected=\"selected\"" : string.Empty)>Sports</option>
+								<option value="travel" @((category == "travel") ? "selected=\"selected\"" : string.Empty)>Travel &amp; Events</option>
+							</select>
+						</div>
+						<div>&nbsp;</div>
+						<div>Thumbnail:</div>
+					</div>
+					<div style="float:right; width:360px;">
+						@if (false) {
+						<a href="/play?id=@id" class="videoFeatThumbnailActual" target="_blank" title="Click here to play the video in a new tab.">
+							<div class="videoThumbnailImage">
+								<img src="~/api/thumb?id=@id&type=vid" style="width: 280px; height: 210px;" />
+							</div>
+						</a>
+						}
+						@if (!isDraft)
+						{
+							<div>Preview:</div>
+							<iframe frameborder="0" scrolling="no" src="@("/Player/VideoPlayer?id=" + id + "&creator=" + creator)" id="video_frame" style="width: 360px; height: 203px;"></iframe>
+							<div>&nbsp;</div>
+						}
+						<div>Visibility:</div>
+						<div><select name="visibility" id="visibility"><option value="public" @((visibility == "public") ? "selected=\"selected\"" : string.Empty)>Public</option><option value="unlist" @((visibility == "unlist") ? "selected=\"selected\"" : string.Empty)>Unlisted</option><option value="private" @((visibility == "private") ? "selected=\"selected\"" : string.Empty)>Private</option></select></div>
+						<div>&nbsp;</div>
+						<div>Comment Permissions:</div>
+						<div>
+							<input type="radio" id="Choice1" name="perms" value="2" @((commentPerm == "2") ? "checked" : string.Empty) />
+							<label for="Choice1">Everyone</label>
+							<br />
+							
+							<input type="radio" id="Choice2" name="perms" value="1" @((commentPerm == "1") ? "checked" : string.Empty) />
+							<label for="Choice2">Friends</label>
+							<br />
+							
+							<input type="radio" id="Choice3" name="perms" value="0" @((commentPerm == "0") ? "checked" : string.Empty) />
+							<label for="Choice3">Nobody</label>
+						</div>
+						<div>&nbsp;</div>
+						<div>Video Responses:</div>
+						<div>
+							<input type="radio" id="1Choice1" name="vidResp" value="2" @((vidRespPerm == "2") ? "checked" : string.Empty) />
+							<label for="1Choice1">Everyone</label>
+							<br />
+							
+							<input type="radio" id="1Choice2" name="vidResp" value="1" @((vidRespPerm == "1") ? "checked" : string.Empty) />
+							<label for="1Choice2">Friends</label>
+							<br />
+							
+							<input type="radio" id="1Choice3" name="vidResp" value="0" @((vidRespPerm == "0") ? "checked" : string.Empty) />
+							<label for="1Choice3">Nobody</label>
+						</div>
+						<div>&nbsp;</div>
+						<div>Rating:</div>
+						<div>
+							<input type="radio" id="2Choice1" name="rating" value="e" @((rating == "e") ? "checked" : string.Empty) />
+							<label for="2Choice1">E - Everyone</label>
+							<br />
+							
+							<input type="radio" id="2Choice2" name="rating" value="t" @((rating == "t") ? "checked" : string.Empty) />
+							<label for="2Choice2">T - Teen</label>
+							<br />
+							
+							<input type="radio" id="2Choice3" name="rating" value="m" @((rating == "m") ? "checked" : string.Empty) />
+							<label for="2Choice3">M - Mature</label>
+							<br/>
+							
+							<input type="radio" id="2Choice4" name="rating" value="a" @((rating == "a") ? "checked" : string.Empty) />
+							<label for="2Choice4">A - Adult Only</label>
+						</div>
+						<div>&nbsp;</div>
+						<div>Danger Zone:</div>
+						<div><a href="/deleteVid?id=@id">Delete Video</a></div>
+					</div>
+				</div>
+				<div style="text-align: center;">
+					<input type="submit" value="@((isDraft) ? "Publish Video" : "Update Video")" />
+					<a href="/preview?id=@(id)"><input type="button" value="Preview Changes" /></a>
+				</div>
+				<div><span style="color:#B22222; @((message.Length == 0) ? "display: none" : string.Empty);" id="errorText">@message</span></div>
+				@if (false) {
+				<div><span style="color:#22B222;" id="succeedText">This video has been succesfully updated.</span></div>
+				}
+				@Html.AntiForgeryToken()
+			</form>
+		</div>
+	</td>
+</tr>

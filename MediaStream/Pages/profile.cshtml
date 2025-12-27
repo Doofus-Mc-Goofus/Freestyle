@@ -1,0 +1,391 @@
+﻿@page
+@using MediaStream.Controllers
+@using Newtonsoft.Json.Linq
+@model MediaStream.Pages.profileModel
+@{
+	string id = HttpContext.Request.Query["id"].ToString();
+	string datapath = @"D:\Freestyle\Debug\net6.0\data\";
+	FileStream stream = new(datapath + @"profiles\" + id, FileMode.Open, FileAccess.Read);
+	byte[] result = new byte[stream.Length];
+	_ = await stream.ReadAsync(result, 0, (int)stream.Length);
+	string data = System.Text.Encoding.UTF8.GetString(result);
+	JObject json = JObject.Parse(data);
+	FileStream userstream = new(datapath + @"user\" + id, FileMode.Open, FileAccess.Read);
+	byte[] userresult = new byte[userstream.Length];
+	_ = await userstream.ReadAsync(userresult, 0, (int)userstream.Length);
+	string userdata = System.Text.Encoding.UTF8.GetString(userresult);
+	JObject userjson = JObject.Parse(userdata);
+	string displayName = string.Empty;
+	if (json["displayName"] != null)
+	{
+		displayName = json["displayName"].ToString();
+	}
+	else
+	{
+		displayName = json["name"].ToString();
+	}
+	if (json["vidswatchedShow"] != null && json["vidswatchedShow"].ToString() == "True")
+	{
+		json.Add("vidswatched", ((JArray)(userjson["vidswatched"])).Count);
+	}
+	stream.Close();
+	stream.Dispose();
+	userstream.Close();
+	userstream.Dispose();
+	Layout = "_Layout";
+	int type = -1;
+	if (Request.Cookies["username"] == json["did"].ToString())
+	{
+		type = 1;
+	}
+	else
+	{
+		if (json["followersList"].ToString().Contains("\"" + Request.Cookies["username"] + "\""))
+		{
+			type = 3;
+		}
+		else
+		{
+			type = 2;
+		}
+	}
+	bool sectionnavbar = false;
+	string background = "#fff";
+	string backgroundrepeat = "no-repeat";
+	string backgroundfixed = "local";
+	string backgroundstretch = "contain";
+	string sectionbg = "#fff";
+	string sectionborder = "#ccc";
+	string boldtextcolor = "#000";
+	string boldtextweight = "bold";
+	string normtextcolor = "#000";
+	string normtextweight = "normal";
+	string septextcolor = "#000";
+	string subtextcolor = "#444";
+	string subtextweight = "normal";
+	string linktextcolor = "#0c0975";
+	string textfont = "Arial";
+	if (json["theme"] != null)
+	{
+		if (json["theme"]["navbarsection"] != null)
+		{
+			sectionnavbar = bool.Parse(json["theme"]["navbarsection"].ToString());
+		}
+		if (json["theme"]["background"] != null)
+		{
+			background = json["theme"]["background"].ToString();
+		}
+		if (json["theme"]["backgroundrepeat"] != null)
+		{
+			backgroundrepeat = json["theme"]["backgroundrepeat"].ToString();
+		}
+		if (json["theme"]["backgroundfixed"] != null)
+		{
+			backgroundfixed = json["theme"]["backgroundfixed"].ToString();
+		}
+		if (json["theme"]["backgroundstretch"] != null)
+		{
+			backgroundstretch = json["theme"]["backgroundstretch"].ToString();
+		}
+		if (json["theme"]["sectionbg"] != null)
+		{
+			sectionbg = json["theme"]["sectionbg"].ToString();
+		}
+		if (json["theme"]["sectionborder"] != null)
+		{
+			sectionborder = json["theme"]["sectionborder"].ToString();
+		}
+		if (json["theme"]["boldtextcolor"] != null)
+		{
+			boldtextcolor = json["theme"]["boldtextcolor"].ToString();
+		}
+		if (json["theme"]["boldtextweight"] != null)
+		{
+			boldtextweight = json["theme"]["boldtextweight"].ToString();
+		}
+		if (json["theme"]["normtextcolor"] != null)
+		{
+			normtextcolor = json["theme"]["normtextcolor"].ToString();
+		}
+		if (json["theme"]["normtextweight"] != null)
+		{
+			normtextweight = json["theme"]["normtextweight"].ToString();
+		}
+		if (json["theme"]["septextcolor"] != null)
+		{
+			septextcolor = json["theme"]["septextcolor"].ToString();
+		}
+		if (json["theme"]["subtextcolor"] != null)
+		{
+			subtextcolor = json["theme"]["subtextcolor"].ToString();
+		}
+		if (json["theme"]["subtextweight"] != null)
+		{
+			subtextweight = json["theme"]["subtextweight"].ToString();
+		}
+		if (json["theme"]["linktextcolor"] != null)
+		{
+			linktextcolor = json["theme"]["linktextcolor"].ToString();
+		}
+		if (json["theme"]["textfont"] != null)
+		{
+			textfont = json["theme"]["textfont"].ToString();
+		}
+	}
+	string profilepagelink = "/profile?id=" + json["did"].ToString();
+	byte verify = 0;
+	if (json["verify"] != null)
+	{
+		verify = byte.Parse(json["verify"].ToString());
+	}
+}
+<!--[if lt IE 9]>
+<meta http-equiv="refresh" content="0; url=/migration" />
+<![endif]-->
+<style type="text/css">
+	body {
+		background: @background !important;
+		background-repeat: @backgroundrepeat;
+		background-attachment: @backgroundfixed;
+		background-size: @backgroundstretch;
+	}
+	.sectionbox {
+		background-color: @sectionbg;
+		padding: 4px 0px;
+		border-style: solid;
+		border-color: @sectionborder;
+		border-width: 1px;
+	}
+	.fontfamily strong{
+		color: @boldtextcolor !important;
+		font-weight: @boldtextweight;
+	}
+
+	.fontfamily span, .fontfamily div {
+		color: @normtextcolor;
+		font-weight: @normtextweight;
+	}
+
+	.textseparator {
+		color: @septextcolor !important;
+	}
+
+	.fontfamily .smallgray {
+		color: @subtextcolor !important;
+		font-weight: @subtextweight;
+	}
+
+	.fontfamily div, .fontfamily p, .fontfamily span, .fontfamily strong, .fontfamily td {
+		font-family: @textfont;
+	}
+
+	.fontfamily a {
+		color: @linktextcolor !important;
+	}
+</style>
+<script>
+	window.onload = function()
+	{
+		loadpage();
+	};
+	function loadpage() {
+		var profileEditButton = document.getElementById('profile_edit');
+		var profileFollowButton = document.getElementById('profile_follow');
+		var profileUnfollowButton = document.getElementById('profile_unfollow');
+		if (@type == 1)
+		{
+			profileEditButton.style.display = "inline";
+		} else if (@type == 2) {
+			profileFollowButton.style.display = "inline";
+		} else if (@type == 3)
+		{
+			profileUnfollowButton.style.display = "inline";
+		}
+	}
+	function follow() {
+		urlParam = function(name){
+		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+		if (results == null){
+		   return null;
+		}
+		else {
+		   return decodeURI(results[1]) || 0;
+		}
+		}
+		var myParam = urlParam("id");
+		var http = new XMLHttpRequest();
+		var params = '{"username":"' + myParam + '"}';
+		http.open("POST", "/api/follow", true);
+		http.setRequestHeader("Content-type", "application/json");
+
+		http.onreadystatechange = function() { //Call a function when the state changes.
+			if (http.readyState == XMLHttpRequest.DONE && http.status == 200) {
+				var json = JSON.parse(http.responseText);
+				if (json.redirect != "True")
+				{
+					window.location = "/login";
+				} else {
+					location.reload();
+				}
+			}
+		}
+		http.send(params);
+	}
+	function unfollow() {
+		urlParam = function(name){
+		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+		if (results == null){
+		   return null;
+		}
+		else {
+		   return decodeURI(results[1]) || 0;
+		}
+		}
+		var myParam = urlParam("id");
+		var http = new XMLHttpRequest();
+		var params = '{"username":"' + myParam + '"}';
+		http.open("POST", "/api/unfollow", true);
+		http.setRequestHeader("Content-type", "application/json");
+
+		http.onreadystatechange = function() { //Call a function when the state changes.
+			if (http.readyState == XMLHttpRequest.DONE && http.status == 200) {
+				var json = JSON.parse(http.responseText);
+				if (json.redirect != "True")
+				{
+					window.location = "/login";
+				} else {
+					location.reload();
+				}
+			}
+		}
+		http.send(params);
+	}
+</script>
+<tr>
+	<td colspan="2" class="fontfamily">
+		<div class="@((sectionnavbar) ? " sectionbox" : "navbar" )" style="text-align: center;margin-bottom:16px;">
+			<span style="font-size:14px;">
+				<a href="@profilepagelink">Profile</a><span class="textseparator"> | </span><a href="@(profilepagelink + "&page=video")">Videos</a><span class="textseparator"> | </span><a href="@(profilepagelink + "&page=playlist")">Playlists</a><span class="textseparator"> | </span><a href="@(profilepagelink + "&page=group")">Groups</a><span class="textseparator"> | </span><a href="@(profilepagelink + "&page=follow")">Friends and Followers</a><span class="textseparator"> | </span><a href="@(profilepagelink + "&page=comment")">Comments</a><span class="textseparator"> | </span><a href="@(profilepagelink + "&page=activity")">Activity</a>
+			</span>
+		</div>
+		<div>
+			<div class="profileleftfloat" style="float: left; width: 320px; padding-right: 16px;">
+				<table border="0" cellpadding="0" cellspacing="0" style="width:100%;">
+					<tbody>
+						<tr>
+							<td colspan="2" style="width:96px;">
+								<div style="margin-bottom:5px;"><span style="font-size: 14px;"><strong>@displayName</strong></span><div style="@((verify == 0) ? "display: none;" : string.Empty) float:left; margin-top: 2px; margin-right: 5px;"><a href="#"><img alt="" src="~/img/@((verify == 2) ? "mod.png" : "verify.png")" /></a></div><div id="profile_edit" style="float: right;margin-top:1px;display:none;"><a href="/studio/prof">Edit Profile</a></div><div id="profile_follow" style="float: right;margin-top:1px;display:none;"><a href="#" onclick="follow();">+ Follow</a></div><div id="profile_unfollow" style="float: right;margin-top:1px;display:none;"><a href="#" onclick="unfollow();">- Unfollow</a></div></div>
+							</td>
+						</tr>
+						<tr>
+							<td style="width:96px;"><img alt="" src="~/api/thumb?id=@id&type=user" style="width: 96px; height: 96px;" /></td>
+							<td style="padding-left: 5px;">
+								<div style="font-style: italic">@("@" + json["name"].ToString() + "#" + @json["domain"].ToString())</div>
+								
+								<div><strong>Followers:</strong> @json["followers"].ToString()<span class="textseparator"> | </span><strong>Following:</strong> @json["following"].ToString()</div>
+								@{
+									string date = json["date"].ToString();
+								}
+								<div><strong>Joined:</strong> @(DateTime.Parse(date).ToString("M") + ", " + DateTime.Parse(date).ToString("yyyy"))</div>
+
+								<div><strong>Last Seen:</strong> @(MediaStream.Convert.GetSeenTime(json["lastseen"].ToString()))</div>
+
+								<div><strong>Views:</strong> @json["views"].ToString()</div>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2">@json["bio"].ToString()</td>
+						</tr>
+						<tr>
+							<td colspan="2">
+								@{
+									if (json["actualName"] != null)
+									{
+										<p><strong>Name: </strong><span>@json["actualName"].ToString()</span></p>
+									}
+									if (json["mood"] != null)
+									{
+										<p><strong>Mood: </strong><span>@json["mood"].ToString()</span></p>
+									}
+									if (json["vidswatched"] != null)
+									{
+										<p><strong>Videos Watched: </strong><span>@json["vidswatched"].ToString()</span></p>
+									}
+								}
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div>&nbsp;</div>
+			</div>
+			<div class="profilerightfloat" style="display: table-cell;">
+				@{
+					JArray fuck = JArray.Parse(json["videosMade"].ToString());
+					List<JObject> videos = new List<JObject>();
+					string[] pickedVids = new string[8];
+					for (int i = 0; i < fuck.Count; i++)
+					{
+						FileStream videostream = new(datapath + @"vidmeta\" + id + @"\" + fuck[i].ToString(), FileMode.Open, FileAccess.Read);
+						byte[] videoresult = new byte[videostream.Length];
+						_ = await videostream.ReadAsync(videoresult, 0, (int)videostream.Length);
+						string videodata = System.Text.Encoding.UTF8.GetString(videoresult);
+						JObject videojson = JObject.Parse(videodata);
+						JObject finJson = JObject.Parse("{" + "}");
+						finJson.Add("title", videojson["title"].ToString());
+						finJson.Add("id", fuck[i].ToString());
+						finJson.Add("views", videojson["views"].ToString());
+						finJson.Add("date", videojson["date"].ToString());
+						finJson.Add("desc", videojson["desc"].ToString());
+						if (videojson["category"] != null)
+						{
+							finJson.Add("category", videojson["category"].ToString());
+						}
+						else
+						{
+							finJson.Add("category", "none");
+						}
+						if (videojson["rating"] != null)
+						{
+							finJson.Add("rating", videojson["rating"].ToString());
+						}
+						else
+						{
+							finJson.Add("rating", "p");
+						}
+						videos.Add(finJson);
+						videostream.Close();
+						videostream.Dispose();
+					}
+				}
+				<div class="homeheader"><span style="font-size:14px;"><strong>Videos (@fuck.Count)</strong></span></div>
+
+				<div class="homeheader">
+					<div style="display: inline-block; margin-right: 8px;">
+						@foreach (JObject video in videos)
+						{
+							<div class="videoThumbnail">
+								<a href="/play?id=@video["id"].ToString()&creator=@id" class="videoThumbnailActual">
+									<div class="videoThumbnailImage">
+										<img src="~/api/thumb?id=@video["id"].ToString()&type=vid" style="width: 128px; height: 96px;" />
+									</div>
+									<div class="videoThumbnailOverlay">
+										@video["desc"]
+										<div class="videoThumbnailGenre">@GetLang.GetDisplayName(video["category"].ToString())</div>
+										<img alt="@(video["rating"])" src="/img/rating@(video["rating"]).png" class="videoThumbnailRating">
+									</div>
+								</a>
+
+								<div style="width: 128px;height:32px;white-space: wrap;overflow: hidden;"><a href="/play?id=@video["id"].ToString()&creator=@id">@video["title"].ToString()</a></div>
+
+								<div class="smallgray">@(MediaStream.Convert.GetTime(video["date"].ToString()))</div>
+
+								<div class="smallgray">@video["views"].ToString() views</div>
+							</div>
+						}
+						<div style="width:max-content;"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</td>
+</tr>
