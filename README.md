@@ -1,5 +1,5 @@
 # Freestyle
-A weird YouTube Myspace Fediverse hybrid thing I was working on. I gave up because I realized I wouldn't be able to handle a project of this scale with the resources I had available. Plus, I have a lot of problems in real life I need to prioritize over this project. Feel free to finish the code and host your own instance.
+A weird YouTube Myspace Fediverse hybrid thing I was working on. I gave up because I realized I wouldn't be able to handle a project of this scale with the resources I had available. Plus, I have a lot of problems in real life I need to prioritize over this project. Feel free to finish the code and host your own instance. Just give credit is all.
 
 Since I never finished this project, I though I'd give a progress report to show what I could've done if I had the motivation to.
 
