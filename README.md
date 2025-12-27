@@ -1,23 +1,23 @@
 # Freestyle
-A weird YouTube Myspace Fediverse hybrid thing I'm working on. I'll add the code once the site launches publicly (or if I give up and dump it here for someone else to finish (significantly more likely))
+A weird YouTube Myspace Fediverse hybrid thing I was working on. I gave up because I realized I wouldn't be able to handle a project of this scale with the resources I had available. Plus, I have a lot of problems in real life I need to prioritize over this project. Feel free to finish the code and host your own instance.
 
-Since the code won't be here for a while, I though I'd give a progress report in the mean time to hold all none of you over.
+Since I never finished this project, I though I'd give a progress report to show what I could've done if I had the motivation to.
 
 |Feature|Status|
 |-|-|
-|Site Layout|✔* Done (there are still a few things I'd like to work on before launch)|
-|Basic Views (Profiles, Videos, etc.)|✔* Done (still need to add some stuff once I finish the other features)|
-|Video Playing|✔* Done (still need to add some stuff once I finish the other features)|
+|Site Layout|✔* Done (there are still a few things that need to be done)|
+|Basic Views (Profiles, Videos, etc.)|✔* Done (there are still a few things that need to be done)|
+|Video Playing|✔* Done (there are still a few things that need to be done)|
 |Video Uploading|✔ Done|
 |Video Metadata Editing|✔ Done|
-|Fediverse|⏳ In progress|
-|Groups|⏳ In progress|
-|Playlists|⏳ In progress|
-|Comments|⏳ In progress|
-|Profile Editing|⏳ In progress|
+|Fediverse|⏳ Unfinished|
+|Groups|⏳ Unfinished|
+|Playlists|⏳ Unfinished|
+|Comments|⏳ Unfinished|
+|Profile Editing|⏳ Unfinished|
 |Custom Profile CSS|〰 Started, not in active development|
 |Experiment Opt-In|〰 Started, not in active development| 
 |Feeds|❌ Not started|
 |Video Ratings|❌ Not started| 
 |Moderation|❌ Not started| 
-|Forums|❓ Vague idea I'm throwing at the wall| 
+|Forums|❓ Vague idea, not sure if I'm gonna add| 
